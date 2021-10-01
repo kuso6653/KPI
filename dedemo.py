@@ -19,11 +19,12 @@ last_month_end = this_month_start - timedelta(days=1)
 last_month_start = datetime.datetime(last_month_end.year, last_month_end.month, 1)
 
 # 将上月首尾日期切割
-last_month_start = str(last_month_start).split(" ")
-last_month_end = str(last_month_end).split(" ")
-
+last_month_start = str(last_month_start).split(" ")[0].replace("-", "")
+last_month_end = str(last_month_end).split(" ")[0].replace("-", "")
 this_month_start = str(this_month_start).split(" ")[0].replace("-", "")
 this_month_end = str(this_month_end).split(" ")[0].replace("-", "")
-_this_month_end = str(this_month_end).split(" ")[0].replace("", "")
-data_time = datetime64("2000-01-02")
-print(_this_month_end)
+
+Purchase_in_data = pd.read_excel(f"./DATA/SCM/OP/采购订单列表-{last_month_start}-{this_month_end}.XLSX",
+                                 usecols=['存货编码', '存货名称', '订单编号', '主计量', '数量', '制单时间'],
+                                 converters={'存货编码': str, '订单编号': str, '制单时间': datetime64}
+                                 )
