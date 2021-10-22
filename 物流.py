@@ -26,10 +26,10 @@ last_month_start = datetime.datetime(last_month_end.year, last_month_end.month, 
 last_month_start = str(last_month_start).split(" ")[0].replace("-", "")
 last_month_end = str(last_month_end).split(" ")[0].replace("-", "")
 
-Sale_out_data = pd.read_excel(f"./KPI/SCM/LOGISTIC/销售出库单列表-{last_month_start}-{last_month_end}.XLS",
+Sale_out_data = pd.read_excel(f"./KPI/SCM/LOGISTIC/销售出库单列表-{last_month_start}-{last_month_end}.XLSX",
                               usecols=['发货单号', '审核时间', '存货编码'],
                               converters={'发货单号': str, '存货编码': str})
-Invoice_data = pd.read_excel(f"./KPI/SCM/LOGISTIC/发货单列表-{last_month_start}-{last_month_end}.XLS",
+Invoice_data = pd.read_excel(f"./KPI/SCM/LOGISTIC/发货单列表-{last_month_start}-{last_month_end}.XLSX",
                              usecols=['发货单号', '审核时间', '存货编码'],
                              converters={'发货单号': str, '存货编码': str})
 # usecols=['发货单号', '审核时间'] 为读取指定列名

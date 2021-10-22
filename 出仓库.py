@@ -29,7 +29,7 @@ last_month_start = datetime.datetime(last_month_end.year, last_month_end.month, 
 last_month_start = str(last_month_start).split(" ")[0].replace("-", "")
 last_month_end = str(last_month_end).split(" ")[0].replace("-", "")
 
-Material_out_data = pd.read_excel(f"./KPI/SCM/WM/材料出库单列表-{last_month_start}-{last_month_end}.XLS",
+Material_out_data = pd.read_excel(f"./KPI/SCM/WM/材料出库单列表-{last_month_start}-{last_month_end}.XLSX",
                                   usecols=['材料编码', '物料描述', '审核时间', '制单时间'],
                                   converters={'材料编码': str})
 

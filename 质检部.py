@@ -24,9 +24,9 @@ last_month_end = str(last_month_end).split(" ")[0].replace("-", "")
 
 # 跨车间工序检验
 # 工序检验单审核时间-工序报检单审核时间<24H
-Process_Inspection_data = pd.read_excel(f"./KPI/QM/工序检验单列表-{last_month_start}-{last_month_end}.XLS",
+Process_Inspection_data = pd.read_excel(f"./KPI/QM/工序检验单列表-{last_month_start}-{last_month_end}.XLSX",
                                         usecols=['审核时间', '报检单号'], converters={'报检单号': str})
-Process_Inspection_Application_data = pd.read_excel(f"./KPI/QM/工序报检单列表-{last_month_start}-{last_month_end}.XLS",
+Process_Inspection_Application_data = pd.read_excel(f"./KPI/QM/工序报检单列表-{last_month_start}-{last_month_end}.XLSX",
                                                     usecols=['审核时间', '工序报检单号'], converters={'工序报检单号': str})
 
 # 重命名报检单号为工序报检单号，别分命名报检和检验审核时间
