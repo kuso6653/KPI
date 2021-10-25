@@ -45,7 +45,8 @@ Purchase_in_data = Purchase_in_data.rename(columns={'订单编号': '采购委�
 
 all_data = pd.merge(goods_in_data, Purchase_in_data, on=['存货编码', '存货名称', '采购委外订单号', '行号'])
 # all_data["out_data"] =all_data["制单时间"]-all_data["计划到货日期"]
+all_data['计划到货日期'] = pd.to_datetime(all_data['计划到货日期'].astype(str)) + pd.to_timedelta('20:00:00')
 all_data["out_data/H"] = ((all_data["制单时间"]-all_data["计划到货日期"]) / pd.Timedelta(1, 'H')).astype(int)
 all_data = all_data.loc[all_data["out_data/H"] > 72]
 
-all_data.to_excel('./KPI/SCM/OP/到货单及时率.xlsx', sheet_name="到货单及时率", index=False)
+all_data.to_excel('./KPI/SCM/OP/准时到货率.xlsx', sheet_name="准时到货率", index=False)
