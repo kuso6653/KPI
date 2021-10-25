@@ -30,7 +30,7 @@ last_month_start = str(last_month_start).split(" ")[0].replace("-", "")
 last_month_end = str(last_month_end).split(" ")[0].replace("-", "")
 
 Material_out_data = pd.read_excel(f"./KPI/SCM/WM/材料出库单列表-{last_month_start}-{last_month_end}.XLSX",
-                                  usecols=['材料编码', '物料描述', '审核时间', '制单时间'],
+                                  usecols=['出库单号', '材料编码', '物料描述', '审核时间', '制单时间'],
                                   converters={'材料编码': str})
 
 # usecols=['发货单号', '审核时间'] 为读取指定列名
@@ -48,11 +48,11 @@ Material_out_data = Material_out_data.drop_duplicates()  # 去重
 Material_out_data['审批延时'] = ((Material_out_data['审核时间'] - Material_out_data['制单时间']) / pd.Timedelta(1, 'H')).astype(
     int)
 # 将天数转化为小时数
-Material_out_data.loc[Material_out_data["审批延时"] > 73, "单据状态"] = "超时"  # 计算出来的审批延时大于72为超时
+Material_out_data.loc[Material_out_data["审批延时"] > 72, "单据状态"] = "超时"  # 计算出来的审批延时大于72为超时
 Material_out_data.loc[Material_out_data["审批延时"] <= 72, "单据状态"] = "正常"  # 小于等于72为正常
 
 # all = merge_data["out_time"].count()
 # qualify = merge_data["out_time"].loc[merge_data["diff_date_hour"] <= 24].count()
-
 # print("%.2f" % float(qualify / all))
+
 Material_out_data.to_excel('./KPI/SCM/WM/仓库出库及时率.xlsx', sheet_name="仓库出库及时率", index=False)
