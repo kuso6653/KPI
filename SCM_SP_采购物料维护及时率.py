@@ -24,7 +24,7 @@ class MaterialMaintenance:
     def CheckDataStock(self, BaseData, NewData):
         BaseData = BaseData.dropna(subset=['存货编码'])  # 去除nan的列
         NewData = NewData.dropna(subset=['存货编码'])  # 去除nan的列
-        out_data = pd.merge(BaseData.drop(labels=['主要供货单位名称', '最低供应量', '采购员名称', '固定提前期', '计划默认属性', '启用日期'], axis=1),
+        out_data = pd.merge(BaseData.drop(labels=['主要供货单位名称', '最低供应量', '采购员名称', '固定提前期', '计划默认属性', '启用日期', '停用日期', '无需采购件'], axis=1),
                             NewData,
                             on=['存货编码', '存货名称'])
         out_data = out_data[out_data.isnull().any(axis=1)]
@@ -58,10 +58,12 @@ class MaterialMaintenance:
                 try:  # 存货档案-20211001
                     base_data = pd.read_excel(f"{self.path}/DATA/SCM/存货档案{year}-{last_month}-{work_day}.XLSX",
                                               usecols=['存货编码', '存货名称', '主要供货单位名称', '采购员名称', '最低供应量', '固定提前期', '计划默认属性',
-                                                       '启用日期'],
+                                                       '启用日期', '停用日期', '无需采购件'],
                                               converters={'最低供应量': int, '固定提前期': int}
                                               )
                     base_data = base_data.loc[base_data["计划默认属性"] == "采购"]
+                    base_data = base_data[
+                        (base_data["停用日期"].isnull()) & (base_data["无需采购件"].isnull())]
                     base_data_stock.append(base_data)
                     flag = flag + 1
                     continue
@@ -71,11 +73,12 @@ class MaterialMaintenance:
                 try:
                     self.new_data = pd.read_excel(f"{self.path}/DATA/SCM/存货档案{year}-{this_month}-{work_day}.XLSX",
                                                   usecols=['存货编码', '存货名称', '主要供货单位名称', '采购员名称', '最低供应量', '固定提前期',
-                                                           '计划默认属性',
-                                                           '启用日期'],
+                                                           '计划默认属性', '启用日期', '停用日期', '无需采购件'],
                                                   converters={'最低供应量': int, '固定提前期': int, '启用日期': datetime64}
                                                   )
                     self.new_data = self.new_data.loc[self.new_data["计划默认属性"] == "采购"]
+                    self.new_data = self.new_data[
+                        (self.new_data["停用日期"].isnull()) & (self.new_data["无需采购件"].isnull())]
                 except:
                     continue
                 base_data_stock.append(self.new_data)  # 新添加新的base
@@ -97,8 +100,8 @@ class MaterialMaintenance:
 
     def HistoryNotMaintained(self):  # 历史未维护数据清单
         self.mkdir(self.path + '/RESULT/SCM/SP')
-        book = load_workbook('./RESULT/SCM/SP/采购物料维护及时率.xlsx')
-        writer = pd.ExcelWriter("./RESULT/SCM/SP/采购物料维护及时率.xlsx", engine='openpyxl')
+        book = load_workbook(f'{self.path}/RESULT/SCM/SP/采购物料维护及时率.xlsx')
+        writer = pd.ExcelWriter(f"{self.path}/RESULT/SCM/SP/采购物料维护及时率.xlsx", engine='openpyxl')
         writer.book = book
         self.new_data.to_excel(writer, "历史未维护数据清单", index=False)
         writer.save()

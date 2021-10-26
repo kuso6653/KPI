@@ -23,7 +23,7 @@ class CrossWorkshop:
         # 工序检验单审核时间-工序报检单审核时间<24H
         Process_Inspection_data = pd.read_excel(
             f"{self.path}/DATA/QM/工序检验单列表-{self.ThisMonthStart}-{self.ThisMonthEnd}.XLSX",
-            usecols=['工序检验单号', '生产批号', '生产订单号', '生产订单行号', '报检单号', '存货编码', '物料描述', '报检数量', '审核时间'],
+            usecols=['工序检验单号', '生产批号', '生产订单号', '生产订单行号', '报检单号', '存货编码', '物料描述', '报检数量', '审核时间', '生产部门名称'],
             converters={'报检单号': str, '生产订单号': str, '存货编码': str})
         Process_Inspection_Application_data = pd.read_excel(
             f"{self.path}/DATA/QM/工序报检单列表-{self.ThisMonthStart}-{self.ThisMonthEnd}.XLSX",
@@ -44,6 +44,10 @@ class CrossWorkshop:
             int)
         Process_Inspection_all.loc[Process_Inspection_all["审批延时"] > 24, "单据状态"] = "超时"
         Process_Inspection_all.loc[Process_Inspection_all["审批延时"] <= 24, "单据状态"] = "正常"
+        order = ['工序检验单号', '生产批号', '生产部门名称', '生产订单号', '生产订单行号', '存货编码', '物料描述', '报检数量',
+                 '报检审核时间', '检验审核时间', '审批延时', '单据状态']
+        Process_Inspection_all = Process_Inspection_all[order]
+
         self.SaveFile(Process_Inspection_all)
 
     def SaveFile(self, Process_Inspection_all):

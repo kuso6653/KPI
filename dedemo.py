@@ -1,122 +1,100 @@
 import pandas as pd
-import calendar
-import datetime
-from datetime import timedelta
 from numpy import datetime64
 from openpyxl import load_workbook
 
-all_data_mdm = []
-pd.set_option('display.max_columns', None)
-now_data = pd.DataFrame()
+import Func
 
 
-def ReformDays(Days):
-    now_work_days = []
-    for day in Days:
-        if day < 10:
-            now_work_days.append("0" + str(day))
-        else:
-            now_work_days.append(str(day))
-    return now_work_days
+class ArriveTime:
+    def __init__(self):
+        self.func = Func
+        self.ThisMonthStart, self.ThisMonthEnd, self.LastMonthEnd, self.LastMonthStart = self.func.GetDate()
+        self.path = "//10.56.164.127/it&m/KPI"
+        # 将上月首尾日期切割
+        self.ThisMonthStart = str(self.ThisMonthStart).split(" ")[0].replace("-", "")
+        self.ThisMonthEnd = str(self.ThisMonthEnd).split(" ")[0].replace("-", "")
+        self.LastMonthStart = str(self.LastMonthStart).split(" ")[0].replace("-", "")
+        self.LastMonthEnd = str(self.LastMonthEnd).split(" ")[0].replace("-", "")
+        # self.GoodsInData = pd.read_excel(
+        #     f"{self.path}/DATA/SCM/OP/到货单列表-{self.LastMonthStart}-{self.ThisMonthEnd}.XLSX",
+        #     usecols=['存货编码', '存货名称', '采购委外订单号', '行号', '制单时间'],
+        #     converters={'行号': int, '存货编码': str, '制单时间': datetime64})
+        self.PurchaseInData = pd.read_excel(
+            f"{self.path}/DATA/SCM/OP/采购订单列表-{self.LastMonthStart}-{self.ThisMonthEnd}.XLSX",
+            usecols=['订单编号', '行号', '实际到货日期'],
+            converters={'行号': int, '实际到货日期': datetime64})
+        self.Prescription = pd.read_excel(
+            f"{self.path}/DATA/SCM/采购时效性统计表-{self.LastMonthStart}-{self.ThisMonthEnd}.XLSX",
+            usecols=[0, 1, 6, 7, 9, 11, 12, 14, 15, 16], header=2,
+            names=["行号", "采购订单号", "存货编码", "存货名称", "计划到货日期", "采购订单制单时间", "采购订单审核时间",
+                   "到货单号", "到货单行号", "到货单制单时间"],
+            converters={'计划到货日期': datetime64, '采购订单制单时间': datetime64, '采购订单审核时间': datetime64, '到货单制单时间': datetime64})
 
+    def mkdir(self, path):
+        self.func.mkdir(path)
 
-def CheckDataStock(first, two):
-    global all_data_mdm
-    first = first.dropna(subset=['存货编码'])  # 去除nan的列
-    two = two.dropna(subset=['存货编码'])  # 去除nan的列
-    out_data = pd.merge(two.drop(labels=['主要供货单位名称', '最低供应量', '采购员名称', '固定提前期', '计划默认属性', '启用日期'], axis=1), first,
-                        on=['存货编码', '存货名称'])
-    out_data = out_data[out_data.isnull().any(axis=1)]
-    out_data = out_data.loc[out_data["固定提前期"] == 0]
+    def GetThisMonthArriveTime(self):  # 当月准时到货率 和 当月未到货清单
+        self.Prescription = self.Prescription.dropna(subset=['行号'])  # 去除nan的列
+        self.PurchaseInData = self.PurchaseInData.dropna(subset=['行号'])  # 去除nan的列
+        self.PurchaseInData = self.PurchaseInData.rename(columns={'订单编号': '采购订单号', '行号': '采购订单行号'})
+        self.Prescription = self.Prescription.rename(columns={'行号': '采购订单行号'})
+        ThisMonthArriveData = self.Prescription[self.ThisMonthEnd >= self.Prescription['计划到货日期']]
+        ThisMonthArriveData = ThisMonthArriveData[ThisMonthArriveData['计划到货日期'] >= self.ThisMonthStart]
+        ThisMonthArriveData = pd.merge(ThisMonthArriveData, self.PurchaseInData, on=['采购订单号', '采购订单行号'])
 
-    all_data_mdm.append(out_data)
+        # 筛选 实际到货日期 为空的， 用 计划到货日期 补全
+        # ThisMonthArriveData["实际到货日期"][ThisMonthArriveData["实际到货日期"].isnull()] = ThisMonthArriveData['计划到货日期']
+        ThisMonthArriveData['实际到货日期'] = ThisMonthArriveData['实际到货日期'].fillna(ThisMonthArriveData['计划到货日期'])
+        ThisMonthArriveData['实际到货日期'] = pd.to_datetime(ThisMonthArriveData['实际到货日期'].astype(str)) + pd.to_timedelta(
+            '20:00:00')
+        ThisMonthNoArriveData = ThisMonthArriveData[ThisMonthArriveData.isnull().any(axis=1)]  #
+        ThisMonthArriveData = ThisMonthArriveData[ThisMonthArriveData['到货单制单时间'].notnull()]  #
+        ThisMonthArriveData["审批延时/H"] = (
+                (ThisMonthArriveData["到货单制单时间"] - ThisMonthArriveData["实际到货日期"]) / pd.Timedelta(1, 'H')).astype(int)
+        ThisMonthArriveData.loc[ThisMonthArriveData["审批延时/H"] > 72, "单据状态"] = "逾期"
+        ThisMonthArriveData.loc[ThisMonthArriveData["审批延时/H"] <= 72, "单据状态"] = "正常"
+        ThisMonthArriveData.loc[ThisMonthArriveData["审批延时/H"] < 0, "单据状态"] = "提前"
 
+        # del ThisMonthArriveData['采购订单制单时间']
+        # del ThisMonthArriveData['审核时间']
 
-# 获取当月工作日函数
-def WorkDays(year, month):
-    # 利用日历函数，创建截取工作日日期
-    cal = calendar.Calendar()
-    Work_Days = []  # 创建工作日数组
-    for week in cal.monthdayscalendar(int(year), int(month)):
-        for i, day in enumerate(week):
-            # 为0或者大于等于5的为休息日
-            if day == 0 or i >= 5:
-                continue
-            # 否则加入数组
-            Work_Days.append(day)
-    return Work_Days
+        ThisMonthArriveData_Order = ['采购订单号', '采购订单行号', '存货编码', '存货名称', '计划到货日期', '实际到货日期', '采购订单制单时间', '采购订单审核时间',
+                                     '到货单号', '到货单行号', '到货单制单时间', '审批延时/H', '单据状态']
+        ThisMonthNoArriveData_Order = ['采购订单号', '采购订单行号', '存货编码', '存货名称', '计划到货日期', '实际到货日期', '采购订单制单时间', '采购订单审核时间',
+                                       '到货单号', '到货单行号', '到货单制单时间']
+        ThisMonthArriveData = ThisMonthArriveData[ThisMonthArriveData_Order]
+        ThisMonthNoArriveData = ThisMonthNoArriveData[ThisMonthNoArriveData_Order]
+
+        self.mkdir(self.path + "/RESULT/SCM/OP")
+        ThisMonthArriveData.to_excel(f'{self.path}/RESULT/SCM/OP/demo.xlsx', sheet_name="当月准时到货率", index=False)
+        book = load_workbook(f'{self.path}/RESULT/SCM/OP/demo.xlsx')
+        writer = pd.ExcelWriter(f"{self.path}/RESULT/SCM/OP/demo.xlsx", engine='openpyxl')
+        writer.book = book
+        ThisMonthNoArriveData.to_excel(writer, "当月未到货清单", index=False)
+        writer.save()
+
+    def GetHistoryMonthArriveTime(self):  # 历史未到货清单
+        HistoryMonthArriveData = self.Prescription[self.Prescription['计划到货日期'] < self.ThisMonthStart]
+        HistoryMonthArriveData = pd.merge(self.PurchaseInData, HistoryMonthArriveData, on=['采购订单号', '采购订单行号'])
+        # HistoryMonthArriveData = HistoryMonthArriveData.rename(columns={'行号': '采购订单行号'})
+        HistoryMonthArriveData["实际到货日期"][HistoryMonthArriveData["实际到货日期"].isnull()] = HistoryMonthArriveData['计划到货日期']
+        HistoryMonthArriveData = HistoryMonthArriveData[
+            (HistoryMonthArriveData["采购订单审核时间"].isnull()) | (HistoryMonthArriveData["到货单制单时间"].isnull())]
+        order = ['采购订单号', '采购订单行号', '存货编码', '存货名称', '计划到货日期', '实际到货日期', '采购订单制单时间', '采购订单审核时间', '到货单号', '到货单行号',
+                 '到货单制单时间']
+        HistoryMonthArriveData = HistoryMonthArriveData[order]
+
+        book = load_workbook(f'{self.path}/RESULT/SCM/OP/demo.xlsx')
+        writer = pd.ExcelWriter(f"{self.path}/RESULT/SCM/OP/demo.xlsx", engine='openpyxl')
+        writer.book = book
+        HistoryMonthArriveData.to_excel(writer, "历史未到货清单", index=False)
+        writer.save()
+
+    def run(self):
+        self.GetThisMonthArriveTime()
+        self.GetHistoryMonthArriveTime()
 
 
 if __name__ == '__main__':
-    now = datetime.date.today()
-    # 获取当月首尾日期
-    this_month_start = datetime.datetime(now.year, now.month, 1)
-    this_month_end = datetime.datetime(now.year, now.month, calendar.monthrange(now.year, now.month)[1])
-    # 获取上月首尾日期
-    last_month_end = this_month_start - timedelta(days=1)
-    last_month_start = datetime.datetime(last_month_end.year, last_month_end.month, 1)
-    # 获取截取这个月份、年、上个月
-    this_month_start = str(this_month_start).split(" ")[0]
-    this_month = this_month_start.split("-")[1]
-
-    year = this_month_start.split("-")[0]
-
-    last_month_start = str(last_month_start).split(" ")[0]
-    last_month = last_month_start.split("-")[1]
-
-    last_work_days = WorkDays(year, last_month)  # 获取上个月工作日
-    this_work_days = WorkDays(year, this_month)  # 获取这个月工作日
-    work_days7 = []  # 设设置到上月7天
-
-    work_days7.extend(last_work_days[-7:])
-    work_days7.extend(this_work_days)  # 将上个月最后七天和这个月工作日相合并
-    work_days7 = ReformDays(work_days7)  # 改造
-
-    base_data_mrp = []
-
-    base_data_stock = []
-
-    flag = 0
-    for x in work_days7:
-        if flag < 7:
-            try:  # 存货档案-20211001
-                base_data = pd.read_excel(f"./DATA/SCM/存货档案{year}-{last_month}-{x}.XLSX",
-                                          usecols=['存货编码', '存货名称', '主要供货单位名称', '采购员名称', '最低供应量', '固定提前期', '计划默认属性', '启用日期'],
-                                          converters={'最低供应量': int, '固定提前期': int}
-                                          )
-                base_data = base_data.loc[base_data["计划默认属性"] == "采购"]
-                base_data_stock.append(base_data)
-                flag = flag + 1
-                continue
-            except:
-                continue
-        else:
-            try:
-                now_data = pd.read_excel(f"./DATA/SCM/存货档案{year}-{this_month}-{x}.XLSX",
-                                         usecols=['存货编码', '存货名称', '主要供货单位名称', '采购员名称', '最低供应量', '固定提前期', '计划默认属性', '启用日期'],
-                                         converters={'最低供应量': int, '固定提前期': int, '启用日期': datetime64}
-                                         )
-                now_data = now_data.loc[now_data["计划默认属性"] == "采购"]
-            except:
-                continue
-            base_data_stock.append(now_data)  # 新添加新的base
-            CheckDataStock(base_data_stock[0], now_data)  # 合并检查是否存在一样的
-            del (base_data_stock[0])  # 删除第一个base
-
-    res = pd.concat(all_data_mdm, axis=0, ignore_index=True)
-    res = res.drop_duplicates()
-    now_data = now_data[now_data.isnull().any(axis=1)]
-    #  小于当月的历史未维护订单数据筛选
-    now_data = now_data.loc[now_data["固定提前期"] == 0]
-    now_data = now_data[now_data['启用日期'] < datetime64(this_month_start)]
-    #  当月大于7天的未维护订单数据筛选
-    res = res.loc[res["固定提前期"] == 0]
-    res = res[res['启用日期'] >= datetime64(this_month_start)]
-    # now_data['启用日期'] = str(now_data['启用日期']).split(" ")[0]
-    res.to_excel('./RESULT/SCM/SP/11.xlsx', sheet_name="当月大于7天未维护的采购物料清单", index=False)
-
-    book = load_workbook('./RESULT/SCM/SP/11.xlsx')
-    writer = pd.ExcelWriter("./RESULT/SCM/SP/11.xlsx", engine='openpyxl')
-    writer.book = book
-    now_data.to_excel(writer, "历史未维护数据清单", index=False)
-    writer.save()
+    AT = ArriveTime()
+    AT.run()

@@ -30,8 +30,7 @@ class Warehouse:
 
     def GetWarehouse(self):
         self.PurchaseInData = self.PurchaseInData.dropna(axis=0, how='any')  # 去除所有nan的列
-        self.PurchaseInData['审批延时'] = ((self.PurchaseInData['入库制单时间'] - self.PurchaseInData['订单制单时间']
-                                        - (self.PurchaseInData['检验审核时间'] - self.PurchaseInData['报检审核时间']))
+        self.PurchaseInData['审批延时'] = ((self.PurchaseInData['入库制单时间'] - self.PurchaseInData['检验审核时间'])
                                        / pd.Timedelta(1, 'H')).astype(int)  # 制单时间相减，然后减去 质检的审核时间
         # 将天数转化为小时数
         self.PurchaseInData.loc[self.PurchaseInData["审批延时"] > 72, "单据状态"] = "超时"  # 计算出来的审批延时大于72为超时
