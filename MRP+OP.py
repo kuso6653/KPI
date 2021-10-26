@@ -3,6 +3,8 @@ import calendar
 import datetime
 from datetime import timedelta
 
+from openpyxl import load_workbook
+
 all_merge_data_mrp = []  # 筛选合并的mrp数据
 all_data_mrp = []  # 所有的mrp数据
 pd.set_option('display.max_columns', None)
@@ -111,7 +113,7 @@ if __name__ == '__main__':
 
     merge_mrp_rows = end_merge_data.shape[0]  # 合并后的mrp行数
 
-    end_merge_data.to_excel('./KPI/MRP及时率.xlsx', sheet_name="MRP及时率", index=False)
+
 
     # # 总文件名维护成    U8_KPI统计表.xlsx
     last_month_start = str(last_month_start).split(" ")[0].replace("-", "")
@@ -137,6 +139,10 @@ if __name__ == '__main__':
     pr_data.reset_index()
 
     merge_pr_rows = pr_data.shape[0]
-    pr_data.to_excel('./KPI/SCM/OP/OP及时率.xlsx', sheet_name="OP及时率", index=False)
-
+    pr_data.to_excel('./KPI/SCM/OP/采购订单转换及时率.xlsx', sheet_name="未转换PR", index=False)
+    book = load_workbook('./KPI/SCM/OP/采购订单转换及时率.xlsx')
+    writer = pd.ExcelWriter("./KPI/SCM/OP/采购订单转换及时率.xlsx", engine='openpyxl')
+    writer.book = book
+    pr_data.to_excel(writer, "未转换MRP", index=False)
+    writer.save()
     print("%.2f" % float((merge_pr_rows+merge_mrp_rows)/(all_mrp_rows+all_pr_rows)))
