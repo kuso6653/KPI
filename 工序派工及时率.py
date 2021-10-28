@@ -95,4 +95,4 @@ if __name__ == '__main__':
 
     res = pd.concat(all_data_work, axis=0, ignore_index=True)
     res = res.drop_duplicates()
-    res.to_excel('./KPI/工序派工及时率.xlsx', sheet_name="工序派工及时率", index=False)
+    res.to_excel('./KPI/PROD/工序派工及时率.xlsx', sheet_name="工序派工及时率", index=False)

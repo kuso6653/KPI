@@ -49,7 +49,7 @@ t3 = t1 - t2
 
 merge_data['审批延时'] = ((merge_data['销售出库单审核时间'] - merge_data['发货单审核时间']) / pd.Timedelta(1, 'H')).astype(
     int)
-merge_data.loc[merge_data["审批延时"] > 25, "单据状态"] = "超时"
+merge_data.loc[merge_data["审批延时"] > 24, "单据状态"] = "超时"
 merge_data.loc[merge_data["审批延时"] <= 24, "单据状态"] = "正常"
 
 # all = merge_data["out_time"].count()
