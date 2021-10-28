@@ -58,5 +58,5 @@ merge_data.loc[merge_data["审批延时"] <= 24, "单据状态"] = "正常"
 # print("%.2f" % float(qualify / all))
 # merge_data["word_time"] = pd.Timedelta(t1 - t2).seconds/3600.00
 # print(merge_data["word_time"])
-merge_data.to_excel('./KPI/SCM/LOGISTIC/物流出货及时率.xlsx', sheet_name="物流出货及时率")
+merge_data.to_excel('./KPI/SCM/LOGISTIC/发货及时率.xlsx', sheet_name="发货及时率")
 
