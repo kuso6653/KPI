@@ -24,7 +24,7 @@ this_month_end = str(this_month_end).split(" ")[0].replace("-", "")
 last_month_start = str(last_month_start).split(" ")[0].replace("-", "")
 last_month_end = str(last_month_end).split(" ")[0].replace("-", "")
 # 材料出库及时率
-Purchase_in_data = pd.read_excel(f"./DATA/SCM/采购时效性统计表-{last_month_start}-{last_month_end}.XLSX",
+Purchase_in_data = pd.read_excel(f"./DATA/SCM/采购时效性统计表-{this_month_start}-{this_month_end}.XLSX",
                                  usecols=[1, 6, 7, 12, 22, 26, 30], header=3,
                                  names=["订单号", "存货编码", "存货名称", "订单制单时间", "报检审核时间", "检验审核时间", "入库制单时间"],
                                  converters={'订单制单时间': datetime64, '报检审核时间': datetime64, '检验审核时间': datetime64,

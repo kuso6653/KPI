@@ -24,6 +24,6 @@ last_month_end = str(last_month_end).split(" ")
 
 this_month_start = str(this_month_start).split(" ")[0].replace("-", "")
 this_month_end = str(this_month_end).split(" ")[0].replace("-", "")
-
+_this_month_end = str(this_month_end).split(" ")[0].replace("", "")
 data_time = datetime64("2000-01-02")
-print(this_month_start, this_month_end)
+print(_this_month_end)
