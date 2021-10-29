@@ -26,10 +26,10 @@ last_month_start = datetime.datetime(last_month_end.year, last_month_end.month, 
 last_month_start = str(last_month_start).split(" ")[0].replace("-", "")
 last_month_end = str(last_month_end).split(" ")[0].replace("-", "")
 
-Sale_out_data = pd.read_excel(f"./KPI/SCM/LOGISTIC/销售出库单列表-{last_month_start}-{last_month_end}.XLSX",
+Sale_out_data = pd.read_excel(f"./DATA/SCM/LOGISTIC/销售出库单列表-{last_month_start}-{last_month_end}.XLSX",
                               usecols=['发货单号', '审核时间', '存货编码'],
                               converters={'发货单号': str, '存货编码': str})
-Invoice_data = pd.read_excel(f"./KPI/SCM/LOGISTIC/发货单列表-{last_month_start}-{last_month_end}.XLSX",
+Invoice_data = pd.read_excel(f"./DATA/SCM/LOGISTIC/发货单列表-{last_month_start}-{last_month_end}.XLSX",
                              usecols=['发货单号', '审核时间', '存货编码'],
                              converters={'发货单号': str, '存货编码': str})
 # usecols=['发货单号', '审核时间'] 为读取指定列名
@@ -58,5 +58,5 @@ merge_data.loc[merge_data["审批延时"] <= 24, "单据状态"] = "正常"
 # print("%.2f" % float(qualify / all))
 # merge_data["word_time"] = pd.Timedelta(t1 - t2).seconds/3600.00
 # print(merge_data["word_time"])
-merge_data.to_excel('./KPI/SCM/LOGISTIC/发货及时率.xlsx', sheet_name="发货及时率")
+merge_data.to_excel('./RESULT/SCM/LOGISTIC/发货及时率.xlsx', sheet_name="发货及时率")
 

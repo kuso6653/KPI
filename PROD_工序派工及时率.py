@@ -71,7 +71,7 @@ if __name__ == '__main__':
     for x in work_days:
         if flag < 3:
             try:
-                base_data = pd.read_excel(f"./KPI/工序派工资料维护{year}-{last_month}-{x}.XLSX",
+                base_data = pd.read_excel(f"./DATA/PROD/工序派工资料维护{year}-{last_month}-{x}.XLSX",
                                           usecols=['物料编码', '生产订单', '工序行号', '派工标识', '行号'],
                                           converters={'物料编码': int, '工序行号': int}
                                           )
@@ -83,7 +83,7 @@ if __name__ == '__main__':
                 continue
         else:
             try:
-                now_data = pd.read_excel(f"./KPI/工序派工资料维护{year}-{this_month}-{x}.XLSX",
+                now_data = pd.read_excel(f"./DATA/PROD/工序派工资料维护{year}-{this_month}-{x}.XLSX",
                                          usecols=['物料编码', '生产订单', '工序行号', '派工标识', '行号'],
                                          converters={'物料编码': int, '工序行号': int}
                                          )
@@ -95,4 +95,4 @@ if __name__ == '__main__':
 
     res = pd.concat(all_data_work, axis=0, ignore_index=True)
     res = res.drop_duplicates()
-    res.to_excel('./KPI/PROD/工序派工及时率.xlsx', sheet_name="工序派工及时率", index=False)
+    res.to_excel(f'./RESULT/PROD/工序派工及时率{year}-{this_month}.xlsx', sheet_name="工序派工及时率", index=False)

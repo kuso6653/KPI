@@ -18,8 +18,8 @@ last_month_end = this_month_start - timedelta(days=1)
 last_month_start = datetime.datetime(last_month_end.year, last_month_end.month, 1)
 
 # 将上月首尾日期切割
-last_month_start = str(last_month_start).split(" ")[0].replace("-", "")
-last_month_end = str(last_month_end).split(" ")[0].replace("-", "")
+this_month_start = str(this_month_start).split(" ")[0].replace("-", "")
+this_month_end = str(this_month_end).split(" ")[0].replace("-", "")
 # 职责要求：录入出库/入库数据至SAP，确保其有效性；
 # 数据范围：
 # 1）出库/入库数据；
@@ -29,7 +29,7 @@ last_month_end = str(last_month_end).split(" ")[0].replace("-", "")
 # 当月材料出库单审核时间-当月材料出库单创建时间＞72H / 当月材料出库单总条数当月
 # （采购入库单时间-采购到货单时间）＞ 72H/当月采购到货单总条
 # 导入采购时效性表格
-Purchase_in_data = pd.read_excel(f"./KPI/SCM/WM/采购时效性统计表-{last_month_start}-{last_month_end}.XLSX",
+Purchase_in_data = pd.read_excel(f"./DATA/SCM/采购时效性统计表-{this_month_start}-{this_month_end}.XLSX",
                                  usecols=[1, 6, 7, 12, 22, 26, 30], header=3,
                                  names=["订单号", "存货编码", "存货名称", "订单制单时间", "报检审核时间", "检验审核时间", "入库制单时间"],
                                  converters={'订单制单时间': datetime64, '报检审核时间': datetime64, '检验审核时间': datetime64,
@@ -48,4 +48,4 @@ QM_data['审批延时'] = ((QM_data['检验审核时间'] - QM_data['报检审�
 QM_data.loc[QM_data["审批延时"] > 24, "单据状态"] = "超时"  # 计算出来的质检的审批延时大于24为超时
 QM_data.loc[QM_data["审批延时"] <= 24, "单据状态"] = "正常"  # 小于等于24为正常
 
-QM_data.to_excel('./KPI/QM/来料检验及时率.xlsx', sheet_name="来料检验及时率", index=False)
+QM_data.to_excel('./RESULT/QM/来料检验及时率.xlsx', sheet_name="来料检验及时率", index=False)

@@ -31,11 +31,11 @@ this_month_end = str(this_month_end).split(" ")[0].replace("-", "")
 # 当月材料出库单审核时间-当月材料出库单创建时间＞72H / 当月材料出库单总条数当月
 # （采购入库单时间-采购到货单时间）＞ 72H/当月采购到货单总条
 # 导入采购时效性表格  到货单列表-20210901-20211031
-goods_in_data = pd.read_excel(f"./KPI/SCM/OP/到货单列表-{last_month_start}-{this_month_end}.XLSX",
+goods_in_data = pd.read_excel(f"./DATA/SCM/OP/到货单列表-{last_month_start}-{this_month_end}.XLSX",
                               usecols=['存货编码', '存货名称', '采购委外订单号', '行号', '制单时间'],
                               converters={'行号': int, '存货编码': str, '制单时间': datetime64}
                               )
-Purchase_in_data = pd.read_excel(f"./KPI/SCM/OP/采购订单列表-{last_month_start}-{last_month_end}.XLSX",
+Purchase_in_data = pd.read_excel(f"./DATA/SCM/OP/采购订单列表-{last_month_start}-{this_month_end}.XLSX",
                                  usecols=['存货编码', '存货名称', '订单编号', '行号', '计划到货日期'],
                                  converters={'存货编码': str, '行号': int, '计划到货日期': datetime64}
                                  )
@@ -49,4 +49,4 @@ all_data['计划到货日期'] = pd.to_datetime(all_data['计划到货日期'].a
 all_data["out_data/H"] = ((all_data["制单时间"]-all_data["计划到货日期"]) / pd.Timedelta(1, 'H')).astype(int)
 all_data = all_data.loc[all_data["out_data/H"] > 72]
 
-all_data.to_excel('./KPI/SCM/OP/准时到货率.xlsx', sheet_name="准时到货率", index=False)
+all_data.to_excel('./RESULT/SCM/OP/准时到货率.xlsx', sheet_name="准时到货率", index=False)

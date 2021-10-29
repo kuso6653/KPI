@@ -18,13 +18,13 @@ last_month_end = this_month_start - timedelta(days=1)
 last_month_start = datetime.datetime(last_month_end.year, last_month_end.month, 1)
 
 # 将上月首尾日期切割
-last_month_start = str(last_month_start).split(" ")[0].replace("-", "")
-last_month_end = str(last_month_end).split(" ")[0].replace("-", "")
+this_month_start = str(this_month_start).split(" ")[0].replace("-", "")
+this_month_end = str(this_month_end).split(" ")[0].replace("-", "")
 
-Work_data = pd.read_excel(f"./KPI/PROD/报工列表-{last_month_start}-{last_month_end}.XLSX",
+Work_data = pd.read_excel(f"./DATA/PROD/报工列表-{this_month_start}-{this_month_end}.XLSX",
                           usecols=['单据号码', '生产订单', '行号', '物料编码', '物料名称', '移入标准工序', '合格数量', '审核时间', '生产数量'],
                           converters={'单据号码': str, '生产订单': str, '合格数量': float})
-Production_data = pd.read_excel(f"./KPI/PROD/生产订单列表-{last_month_start}-{last_month_end}.XLSX",
+Production_data = pd.read_excel(f"./DATA/PROD/生产订单列表-{this_month_start}-{this_month_end}.XLSX",
                                 usecols=['生产订单号', '完工日期', '行号'],
                                 converters={'生产订单号': str})
 Production_data = Production_data.rename(columns={'生产订单号': '生产订单', '完工日期': '生产订单完工日期'})
@@ -60,4 +60,4 @@ Work_report_data.loc[Work_report_data["报工单审核时间"] > Work_report_dat
 order = ['单据号码', '生产订单', '行号', '物料编码', '物料名称', '移入标准工序', '生产数量', '总合格数量', '完整状态', '生产订单完工日期', '报工单审核时间', '报工状态']
 Work_report_data = Work_report_data[order]
 
-Work_report_data.to_excel("./KPI/PROD/报工及时率和完整率.xlsx", sheet_name="报工及时率和完整率", index=False)
+Work_report_data.to_excel("./RESULT/PROD/报工及时率和完整率.xlsx", sheet_name="报工及时率和完整率", index=False)

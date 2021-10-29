@@ -79,7 +79,7 @@ if __name__ == '__main__':
     for x in work_days:
         if flag < 3:
             try:
-                base_data = pd.read_excel(f"./KPI/MRP计划维护--全部{year}-{last_month}-{x}.XLSX",
+                base_data = pd.read_excel(f"./DATA/SCM/OP/MRP计划维护--全部{year}-{last_month}-{x}.XLSX",
                                           usecols=['物料编码', '物料名称', '需求跟踪号', '需求跟踪行号', '物料属性'],
                                           converters={'物料编码': int, '需求跟踪行号': int}
                                           )
@@ -92,7 +92,7 @@ if __name__ == '__main__':
                 continue
         else:
             try:
-                now_data = pd.read_excel(f"./KPI/MRP计划维护--全部{year}-{this_month}-{x}.XLSX",
+                now_data = pd.read_excel(f"./DATA/SCM/OP/MRP计划维护--全部{year}-{this_month}-{x}.XLSX",
                                          usecols=['物料编码', '物料名称', '需求跟踪号', '需求跟踪行号', '物料属性'],
                                          converters={'物料编码': int, '需求跟踪行号': int}
                                          )
@@ -113,17 +113,16 @@ if __name__ == '__main__':
 
     merge_mrp_rows = end_merge_data.shape[0]  # 合并后的mrp行数
 
-
-
-    # # 总文件名维护成    U8_KPI统计表.xlsx
+# 未转换请购订单清单
+    this_month_start = str(this_month_start).split(" ")[0].replace("-", "")
     last_month_start = str(last_month_start).split(" ")[0].replace("-", "")
-    last_month_end = str(last_month_end).split(" ")[0].replace("-", "")
+    this_month_end = str(this_month_end).split(" ")[0].replace("-", "")
 
-    po_data = pd.read_excel(f"./KPI/SCM/OP/采购订单列表-{last_month_start}-{last_month_end}.XLSX",
+    po_data = pd.read_excel(f"./DATA/SCM/OP/采购订单列表-{last_month_start}-{this_month_end}.XLSX",
                             usecols=['请购单号', '存货编码', '存货名称', '行号'],
                             converters={'请购单号': str, '订单编号': int, '行号': int, '存货编码': int}
                             )
-    pr_data = pd.read_excel(f"./KPI/SCM/OP/请购单列表-{last_month_start}-{last_month_end}.XLSX",
+    pr_data = pd.read_excel(f"./DATA/SCM/OP/请购单列表-{this_month_start}-{this_month_end}.XLSX",
                             usecols=['单据号', '存货编码', '存货名称', '行号'],
                             converters={'单据号': str, '行号': int, '存货编码': int}
                             )
@@ -139,9 +138,9 @@ if __name__ == '__main__':
     pr_data.reset_index()
 
     merge_pr_rows = pr_data.shape[0]
-    pr_data.to_excel('./KPI/SCM/OP/采购订单转换及时率.xlsx', sheet_name="未转换PR", index=False)
-    book = load_workbook('./KPI/SCM/OP/采购订单转换及时率.xlsx')
-    writer = pd.ExcelWriter("./KPI/SCM/OP/采购订单转换及时率.xlsx", engine='openpyxl')
+    pr_data.to_excel('./RESULT/SCM/OP/采购订单转换及时率.xlsx', sheet_name="未转换PR", index=False)
+    book = load_workbook('./RESULT/SCM/OP/采购订单转换及时率.xlsx')
+    writer = pd.ExcelWriter("./RESULT/SCM/OP/采购订单转换及时率.xlsx", engine='openpyxl')
     writer.book = book
     pr_data.to_excel(writer, "未转换MRP", index=False)
     writer.save()

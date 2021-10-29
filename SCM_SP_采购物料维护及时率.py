@@ -78,7 +78,7 @@ if __name__ == '__main__':
     for x in work_days7:
         if flag < 7:
             try:  # 存货档案-20211001
-                base_data = pd.read_excel(f"./KPI/存货档案-{year}{last_month}{x}.XLSX",
+                base_data = pd.read_excel(f"./DATA/SCM/存货档案-{year}{last_month}{x}.XLSX",
                                           usecols=['存货编码', '存货名称', '主要供货单位名称', '采购员名称', '最低供应量', '固定提前期', '计划默认属性'],
                                           converters={'最低供应量': int, '固定提前期': int}
                                           )
@@ -91,7 +91,7 @@ if __name__ == '__main__':
                 continue
         else:
             try:
-                now_data = pd.read_excel(f"./KPI/存货档案-{year}{this_month}{x}.XLSX",
+                now_data = pd.read_excel(f"./DATA/SCM/存货档案-{year}{this_month}{x}.XLSX",
                                          usecols=['存货编码', '存货名称', '主要供货单位名称', '采购员名称', '最低供应量', '固定提前期', '计划默认属性'],
                                          converters={'最低供应量': int, '固定提前期': int}
                                          )
@@ -104,4 +104,4 @@ if __name__ == '__main__':
 
     res = pd.concat(all_data_mdm, axis=0, ignore_index=True)
     res = res.drop_duplicates()
-    res.to_excel('./KPI/SCM/SP/采购物料维护及时率.xlsx', sheet_name="采购物料维护及时率", index=False)
+    res.to_excel('./RESULT/SCM/SP/采购物料维护及时率.xlsx', sheet_name="采购物料维护及时率", index=False)

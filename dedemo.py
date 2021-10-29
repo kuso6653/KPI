@@ -21,5 +21,9 @@ last_month_start = datetime.datetime(last_month_end.year, last_month_end.month, 
 # 将上月首尾日期切割
 last_month_start = str(last_month_start).split(" ")
 last_month_end = str(last_month_end).split(" ")
+
+this_month_start = str(this_month_start).split(" ")[0].replace("-", "")
+this_month_end = str(this_month_end).split(" ")[0].replace("-", "")
+
 data_time = datetime64("2000-01-02")
-print(data_time)
+print(this_month_start, this_month_end)

@@ -19,10 +19,12 @@ last_month_end = this_month_start - timedelta(days=1)
 last_month_start = datetime.datetime(last_month_end.year, last_month_end.month, 1)
 
 # 将上月首尾日期切割
+this_month_start = str(this_month_start).split(" ")[0].replace("-", "")
+this_month_end = str(this_month_end).split(" ")[0].replace("-", "")
 last_month_start = str(last_month_start).split(" ")[0].replace("-", "")
 last_month_end = str(last_month_end).split(" ")[0].replace("-", "")
 # 材料出库及时率
-Purchase_in_data = pd.read_excel(f"./KPI/SCM/WM/采购时效性统计表-{last_month_start}-{last_month_end}.XLSX",
+Purchase_in_data = pd.read_excel(f"./DATA/SCM/采购时效性统计表-{last_month_start}-{last_month_end}.XLSX",
                                  usecols=[1, 6, 7, 12, 22, 26, 30], header=3,
                                  names=["订单号", "存货编码", "存货名称", "订单制单时间", "报检审核时间", "检验审核时间", "入库制单时间"],
                                  converters={'订单制单时间': datetime64, '报检审核时间': datetime64, '检验审核时间': datetime64,
@@ -37,7 +39,7 @@ Purchase_in_data.loc[Purchase_in_data["审批延时"] > 72, "单据状态"] = "�
 Purchase_in_data.loc[Purchase_in_data["审批延时"] <= 72, "单据状态"] = "正常"  # 小于等于72为正常
 
 # 材料出库及时率
-Material_out_data = pd.read_excel(f"./KPI/SCM/WM/材料出库单列表-{last_month_start}-{last_month_end}.XLSX",
+Material_out_data = pd.read_excel(f"./DATA/SCM/WM/材料出库单列表-{this_month_start}-{this_month_end}.XLSX",
                                   usecols=['出库单号', '材料编码', '物料描述', '审核时间', '制单时间'],
                                   converters={'材料编码': str, '出库单号': str})
 
@@ -52,9 +54,9 @@ Material_out_data.loc[Material_out_data["审批延时"] <= 72, "单据状态"] =
 # Purchase_in_data = Purchase_in_data.drop_duplicates()  # 去重
 Material_out_data = Material_out_data.drop_duplicates()  # 去重
 # 保存
-Purchase_in_data.to_excel('./KPI/SCM/WM/仓库出入库及时率.xlsx', sheet_name="仓库入库及时率", index=False)
-book = load_workbook('./KPI/SCM/WM/仓库出入库及时率.xlsx')
-writer = pd.ExcelWriter("./KPI/SCM/WM/仓库出入库及时率.xlsx", engine='openpyxl')
+Purchase_in_data.to_excel('./RESULT/SCM/WM/仓库出入库及时率.xlsx', sheet_name="仓库入库及时率", index=False)
+book = load_workbook('./RESULT/SCM/WM/仓库出入库及时率.xlsx')
+writer = pd.ExcelWriter("./RESULT/SCM/WM/仓库出入库及时率.xlsx", engine='openpyxl')
 writer.book = book
 Material_out_data.to_excel(writer, "仓库出库及时率", index=False)
 writer.save()
