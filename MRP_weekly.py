@@ -3,7 +3,7 @@ import calendar
 import datetime
 from datetime import timedelta
 
-all_merge_data_mrp = []  # 筛选合并的mrp数据
+MRPScreenList = []  # 筛选合并的mrp数据
 pd.set_option('display.max_columns', None)
 
 
@@ -18,7 +18,7 @@ def ReformDays(Days):
 
 
 def CheckDataMRP(first, two):
-    global all_merge_data_mrp
+    global MRPScreenList
     first = first.dropna(subset=['物料编码'])  # 去除nan的列
     two = two.dropna(subset=['物料编码'])  # 去除nan的列
     out_data = pd.merge(first, two, on=['物料编码', '物料名称', '需求跟踪号', '需求跟踪行号', '物料属性'])
@@ -94,7 +94,7 @@ if __name__ == '__main__':
             CheckDataMRP(base_data_mrp[0], now_data)  # 合并检查是否存在一样的
             del (base_data_mrp[0])  # 删除第一个base
 
-    end_merge_data = pd.concat(all_merge_data_mrp, axis=0, ignore_index=True)
+    end_merge_data = pd.concat(MRPScreenList, axis=0, ignore_index=True)
     end_merge_data = end_merge_data.drop_duplicates()
 
     end_merge_data.to_excel('./KPI/SCM/OP/MRP及时率.xlsx', sheet_name="MRP及时率", index=False)

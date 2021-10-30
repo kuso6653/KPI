@@ -4,7 +4,7 @@ import datetime
 from datetime import timedelta
 from numpy import datetime64
 
-all_data_order = []
+SelfMaterialList = []
 pd.set_option('display.max_columns', None)
 
 
@@ -19,7 +19,7 @@ def ReformDays(Days):
 
 
 def CheckDataOrder(first, two):
-    global all_data_order
+    global SelfMaterialList
     first = first.dropna(subset=['存货编码'])  # 去除nan的列
     two = two.dropna(subset=['存货编码'])  # 去除nan的列
     out_data = pd.merge(first.drop(labels=['生产部门名称', '变动提前期', '变动基数', '固定提前期', '计划默认属性'], axis=1), two,
@@ -99,6 +99,6 @@ if __name__ == '__main__':
             CheckDataOrder(base_data_order[0], now_data)  # 合并检查是否存在一样的
             del (base_data_order[0])  # 删除第一个base
 
-    res = pd.concat(all_data_order, axis=0, ignore_index=True)
+    res = pd.concat(SelfMaterialList, axis=0, ignore_index=True)
     res = res.drop_duplicates()
     res.to_excel('./KPI/SCM/OM/订单管理维护及时率.xlsx', sheet_name="订单管理维护及时率", index=False)
