@@ -3,12 +3,11 @@ import calendar
 import datetime
 from datetime import timedelta
 from numpy import datetime64
+from openpyxl import load_workbook
 
 all_data_mdm = []
 pd.set_option('display.max_columns', None)
-# all_data_non = pd.DataFrame(columns=['存货编码', '存货名称', '计划默认属性', '主要供货单位名称', '采购员名称', '最低供应量', '固定提前期'])
-all_data_non = pd.DataFrame()
-all_data_accord = pd.DataFrame(columns=['存货编码', '存货名称', '计划默认属性', '主要供货单位名称', '采购员名称', '最低供应量', '固定提前期'])
+now_data = pd.DataFrame()
 
 
 def ReformDays(Days):
@@ -22,33 +21,16 @@ def ReformDays(Days):
 
 
 def CheckDataStock(first, two):
-    global all_data_mdm, all_data_non
+    global all_data_mdm
     first = first.dropna(subset=['存货编码'])  # 去除nan的列
     two = two.dropna(subset=['存货编码'])  # 去除nan的列
-    # 取two的所有值存在的数据
-    # 主要供货单位名称	采购员名称 最低供应量
-    # 三项都存在并且固定提前期不为0
-    two_accord = two.dropna(subset=['主要供货单位名称', '采购员名称', '最低供应量'])
-    two_accord = two_accord.loc[two_accord["固定提前期"] != 0]
+    out_data = pd.merge(two.drop(labels=['主要供货单位名称', '最低供应量', '采购员名称', '固定提前期', '计划默认属性', '启用日期'], axis=1), first,
+                        on=['存货编码', '存货名称'])
+    out_data = out_data[out_data.isnull().any(axis=1)]
+    out_data = out_data.loc[out_data["固定提前期"] == 0]
 
-    # first - two_accord 的值为不符合
-    first = first.append(two_accord)
-    first = first.append(two_accord)
-    first = first.drop_duplicates(subset=['存货编码', '存货名称'], keep=False)  # 取base中符合数据的 差集
-    # all_data_non = pd.merge(first.drop(labels=['主要供货单位名称', '最低供应量', '采购员名称', '固定提前期', '计划默认属性'], axis=1),
-    #                         all_data_non,
-    #                         on=['存货编码', '存货名称'], how="right")
-    # all_data_mdm.append(first)
-    # all_data_mdm.append(all_data_non)
-    all_data_non = pd.concat([first, all_data_non], axis=0, ignore_index=True)
-    all_data_non.drop_duplicates()
-    # 将部分不符合的部分合并到总的
-    # all_data - two_accord 的为不符合
-    all_data_non = all_data_non.append(two_accord)
-    all_data_non = all_data_non.append(two_accord)
-    all_data_non = all_data_non.drop_duplicates(keep=False)  # 将 部分符合的数据 从 总不符合 的数据中删除
+    all_data_mdm.append(out_data)
 
-    all_data_mdm.clear()
 
 # 获取当月工作日函数
 def WorkDays(year, month):
@@ -99,7 +81,7 @@ if __name__ == '__main__':
         if flag < 7:
             try:  # 存货档案-20211001
                 base_data = pd.read_excel(f"./DATA/SCM/存货档案{year}-{last_month}-{x}.XLSX",
-                                          usecols=['存货编码', '存货名称', '主要供货单位名称', '采购员名称', '最低供应量', '固定提前期', '计划默认属性'],
+                                          usecols=['存货编码', '存货名称', '主要供货单位名称', '采购员名称', '最低供应量', '固定提前期', '计划默认属性', '启用日期'],
                                           converters={'最低供应量': int, '固定提前期': int}
                                           )
                 base_data = base_data.loc[base_data["计划默认属性"] == "采购"]
@@ -111,8 +93,8 @@ if __name__ == '__main__':
         else:
             try:
                 now_data = pd.read_excel(f"./DATA/SCM/存货档案{year}-{this_month}-{x}.XLSX",
-                                         usecols=['存货编码', '存货名称', '主要供货单位名称', '采购员名称', '最低供应量', '固定提前期', '计划默认属性'],
-                                         converters={'最低供应量': int, '固定提前期': int}
+                                         usecols=['存货编码', '存货名称', '主要供货单位名称', '采购员名称', '最低供应量', '固定提前期', '计划默认属性', '启用日期'],
+                                         converters={'最低供应量': int, '固定提前期': int, '启用日期': datetime64}
                                          )
                 now_data = now_data.loc[now_data["计划默认属性"] == "采购"]
             except:
@@ -121,6 +103,20 @@ if __name__ == '__main__':
             CheckDataStock(base_data_stock[0], now_data)  # 合并检查是否存在一样的
             del (base_data_stock[0])  # 删除第一个base
 
-    # res = pd.concat(all_data_mdm, axis=0, ignore_index=True)
-    all_data_non = all_data_non.drop_duplicates()
-    all_data_non.to_excel('./RESULT/SCM/SP/采购物料维护及时率.xlsx', sheet_name="采购物料维护及时率", index=False)
+    res = pd.concat(all_data_mdm, axis=0, ignore_index=True)
+    res = res.drop_duplicates()
+    now_data = now_data[now_data.isnull().any(axis=1)]
+    #  小于当月的历史未维护订单数据筛选
+    now_data = now_data.loc[now_data["固定提前期"] == 0]
+    now_data = now_data[now_data['启用日期'] < datetime64(this_month_start)]
+    #  当月大于7天的未维护订单数据筛选
+    res = res.loc[res["固定提前期"] == 0]
+    res = res[res['启用日期'] >= datetime64(this_month_start)]
+    # now_data['启用日期'] = str(now_data['启用日期']).split(" ")[0]
+    res.to_excel('./RESULT/SCM/SP/11.xlsx', sheet_name="当月大于7天未维护的采购物料清单", index=False)
+
+    book = load_workbook('./RESULT/SCM/SP/11.xlsx')
+    writer = pd.ExcelWriter("./RESULT/SCM/SP/11.xlsx", engine='openpyxl')
+    writer.book = book
+    now_data.to_excel(writer, "历史未维护数据清单", index=False)
+    writer.save()

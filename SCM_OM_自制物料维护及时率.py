@@ -3,10 +3,11 @@ import calendar
 import datetime
 from datetime import timedelta
 from numpy import datetime64
+from openpyxl import load_workbook
 
 all_data_order = []
 pd.set_option('display.max_columns', None)
-
+now_data = pd.DataFrame()
 
 def ReformDays(Days):
     now_work_days = []
@@ -22,7 +23,7 @@ def CheckDataOrder(first, two):
     global all_data_order
     first = first.dropna(subset=['存货编码'])  # 去除nan的列
     two = two.dropna(subset=['存货编码'])  # 去除nan的列
-    out_data = pd.merge(first.drop(labels=['生产部门名称', '变动提前期', '变动基数', '固定提前期', '计划默认属性'], axis=1), two,
+    out_data = pd.merge(first.drop(labels=['生产部门名称', '变动提前期', '变动基数', '固定提前期', '计划默认属性', '启用日期'], axis=1), two,
                         on=['存货编码', '存货名称'])
     out_data = out_data[out_data.isnull().any(axis=1)]
     out_data = out_data.loc[out_data["固定提前期"] == 0]
@@ -77,7 +78,7 @@ if __name__ == '__main__':
         if flag < 3:
             try:  # 存货档案-20211001
                 base_data = pd.read_excel(f"./DATA/SCM/存货档案{year}-{last_month}-{x}.XLSX",
-                                          usecols=['存货编码', '存货名称', '计划默认属性', '固定提前期', '生产部门名称', '变动提前期', '变动基数'],
+                                          usecols=['存货编码', '存货名称', '计划默认属性', '固定提前期', '生产部门名称', '变动提前期', '变动基数', '启用日期'],
                                           converters={'最低供应量': int, '变动提前期': int, '变动基数': float}
                                           )
                 base_data = base_data.loc[base_data["计划默认属性"] == "自制"]
@@ -89,7 +90,7 @@ if __name__ == '__main__':
         else:
             try:
                 now_data = pd.read_excel(f"./DATA/SCM/存货档案{year}-{this_month}-{x}.XLSX",
-                                         usecols=['存货编码', '存货名称', '计划默认属性', '固定提前期', '生产部门名称', '变动提前期', '变动基数'],
+                                         usecols=['存货编码', '存货名称', '计划默认属性', '固定提前期', '生产部门名称', '变动提前期', '变动基数', '启用日期'],
                                          converters={'最低供应量': int, '变动提前期': int, '变动基数': float}
                                          )
                 now_data = now_data.loc[now_data["计划默认属性"] == "自制"]
@@ -101,4 +102,19 @@ if __name__ == '__main__':
 
     res = pd.concat(all_data_order, axis=0, ignore_index=True)
     res = res.drop_duplicates()
-    res.to_excel('./RESULT/SCM/OM/自制物料维护及时率.xlsx', sheet_name="自制物料维护及时率", index=False)
+    # res.to_excel('./RESULT/SCM/OM/自制物料维护及时率.xlsx', sheet_name="当月大于3天的自制物料维护及时率", index=False)
+    now_data = now_data[now_data.isnull().any(axis=1)]
+    #  小于当月的历史未维护订单数据筛选
+    now_data = now_data.loc[now_data["固定提前期"] == 0]
+    now_data = now_data[now_data['启用日期'] < datetime64(this_month_start)]
+    #  当月大于7天的未维护订单数据筛选
+    res = res.loc[res["固定提前期"] == 0]
+    res = res[res['启用日期'] >= datetime64(this_month_start)]
+    # now_data['启用日期'] = str(now_data['启用日期']).split(" ")[0]
+    res.to_excel('./RESULT/SCM/OM/自制物料维护及时率.xlsx', sheet_name="当月大于3天未维护的自制物料清单", index=False)
+
+    book = load_workbook('./RESULT/SCM/OM/自制物料维护及时率.xlsx')
+    writer = pd.ExcelWriter("./RESULT/SCM/OM/自制物料维护及时率.xlsx", engine='openpyxl')
+    writer.book = book
+    now_data.to_excel(writer, "历史未维护数据清单", index=False)
+    writer.save()

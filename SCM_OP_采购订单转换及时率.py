@@ -2,13 +2,13 @@ import pandas as pd
 import calendar
 import datetime
 from datetime import timedelta
-
+from numpy import datetime64
 from openpyxl import load_workbook
 
 all_merge_data_mrp = []  # 筛选合并的mrp数据
 all_data_mrp = []  # 所有的mrp数据
 pd.set_option('display.max_columns', None)
-
+all_list = []
 
 def ReformDays(Days):
     now_work_days = []
@@ -24,7 +24,7 @@ def CheckDataMRP(first, two):
     global all_merge_data_mrp
     first = first.dropna(subset=['物料编码'])  # 去除nan的列
     two = two.dropna(subset=['物料编码'])  # 去除nan的列
-    out_data = pd.merge(first, two, on=['物料编码', '物料名称', '需求跟踪号', '需求跟踪行号', '物料属性'])
+    out_data = pd.merge(first, two.drop(labels=['抓取时间'], axis=1), on=['物料编码', '物料名称', '需求跟踪号', '需求跟踪行号', '物料属性'])
     all_merge_data_mrp.append(out_data)
 
 
@@ -53,6 +53,7 @@ if __name__ == '__main__':
     last_month_start = datetime.datetime(last_month_end.year, last_month_end.month, 1)
     # 获取截取这个月份、年、上个月
     this_month_start = str(this_month_start).split(" ")[0]
+    this_month_check = this_month_start
     this_month_end = str(this_month_end).split(" ")[0]
     this_month = this_month_start.split("-")[1]
 
@@ -84,6 +85,8 @@ if __name__ == '__main__':
                                           converters={'物料编码': int, '需求跟踪行号': int}
                                           )
                 base_data = base_data.loc[base_data["物料属性"] == "采购"]
+                catch_data = datetime64(f"{year}-{last_month}-{x}")
+                base_data['抓取时间'] = catch_data
                 base_data_mrp.append(base_data)
                 flag = flag + 1
                 continue
@@ -99,19 +102,23 @@ if __name__ == '__main__':
                 all_data_mrp.append(now_data)
             except:
                 continue
+            catch_data = datetime64(f"{year}-{this_month}-{x}")
+            now_data['抓取时间'] = catch_data
             now_data = now_data.loc[now_data["物料属性"] == "采购"]
             base_data_mrp.append(now_data)  # 新添加新的base
             CheckDataMRP(base_data_mrp[0], now_data)  # 合并检查是否存在一样的
             del (base_data_mrp[0])  # 删除第一个base
-    all_mrp = pd.concat(all_data_mrp, axis=0, ignore_index=True)
-    all_mrp = all_mrp.drop_duplicates()
-
-    all_mrp_rows = all_mrp.shape[0]  # 所有mrp行数
+    all_mrp = pd.concat(all_merge_data_mrp, axis=0, ignore_index=True)
+    for name1, group in all_mrp.groupby(['物料编码', '需求跟踪号', '需求跟踪行号']):
+        group = pd.DataFrame(group)  # 新建pandas
+        group = group.sort_values(by='抓取时间', ascending=True)  # 升序排序
+        max_data_list = group.head(1)  # 取最早的抓取时间，就是排序后的第一列
+        all_list.append(max_data_list)  # 加入list
+        flag = flag + 1
+    complete_merge_data = pd.concat(all_list, axis=0, ignore_index=True)
 
     end_merge_data = pd.concat(all_merge_data_mrp, axis=0, ignore_index=True)
     end_merge_data = end_merge_data.drop_duplicates()
-
-    merge_mrp_rows = end_merge_data.shape[0]  # 合并后的mrp行数
 
 # 未转换请购订单清单
     this_month_start = str(this_month_start).split(" ")[0].replace("-", "")
@@ -126,7 +133,7 @@ if __name__ == '__main__':
                             usecols=['单据号', '存货编码', '存货名称', '行号'],
                             converters={'单据号': str, '行号': int, '存货编码': int}
                             )
-    all_pr_rows = pr_data.shape[0]
+
     pr_data = pr_data.rename(columns={'单据号': '请购单号'})  # 修改单据号为请购单号
     pr_data = pr_data.dropna(subset=['存货编码'])  # 去除nan的列
     po_data = po_data.dropna(subset=['存货编码'])  # 去除nan的列
@@ -136,12 +143,23 @@ if __name__ == '__main__':
 
     pr_data.drop_duplicates(keep=False, inplace=True)
     pr_data.reset_index()
+    #  小于当月的历史未转换MRP数据筛选
+    MRPHistory_data = complete_merge_data[complete_merge_data['抓取时间'] < datetime64(this_month_check)]
+    #  当月大于2天的未转换MRP数据筛选
+    MRPNow_data = complete_merge_data[complete_merge_data['抓取时间'] >= datetime64(this_month_check)]
 
-    merge_pr_rows = pr_data.shape[0]
-    pr_data.to_excel('./RESULT/SCM/OP/采购订单转换及时率.xlsx', sheet_name="未转换PR", index=False)
     book = load_workbook('./RESULT/SCM/OP/采购订单转换及时率.xlsx')
     writer = pd.ExcelWriter("./RESULT/SCM/OP/采购订单转换及时率.xlsx", engine='openpyxl')
     writer.book = book
-    all_mrp.to_excel(writer, "未转换MRP", index=False)
+    MRPNow_data.to_excel(writer, "当月未转换MRP清单", index=False)
     writer.save()
-    print("%.2f" % float((merge_pr_rows+merge_mrp_rows)/(all_mrp_rows+all_pr_rows)))
+
+    pr_data.to_excel('./RESULT/SCM/OP/采购订单转换及时率.xlsx', sheet_name="当月未转换PR清单", index=False)
+    book = load_workbook('./RESULT/SCM/OP/采购订单转换及时率.xlsx')
+    writer = pd.ExcelWriter("./RESULT/SCM/OP/采购订单转换及时率.xlsx", engine='openpyxl')
+    writer.book = book
+    MRPHistory_data.to_excel(writer, "历史未转换MRP清单", index=False)
+    writer.save()
+
+
+
