@@ -22,8 +22,6 @@ class SalesOrder:
         self.driver.implicitly_wait(20)
         self.n = self.driver.window_handles  # 获取窗口句柄
         self.driver.switch_to.window(self.n[0])  # 切换至第一个窗口
-        self.SealTime = None
-        self.RegisterTime = None
         self.url_list = []
         self.link_name_list = []
         self.SalesOrderData = pd.DataFrame(columns=('U8销售合同单号', 'OA合同审批时间', 'U8系统创建时间'))
@@ -39,10 +37,11 @@ class SalesOrder:
 
         self.driver.implicitly_wait(20)
         self.driver.find_element_by_xpath('//*[@id="warp"]/form/div[2]/div[3]/div[4]/input[3]').click()  # 点击登录
-
+        time.sleep(10)
         self.driver.implicitly_wait(20)
         self.driver.get(
             "http://portal.chemchina.com/oa08/flow/homepage.nsf/ViewData?readform&draft=no&db=dept509/ContractSale.nsf&vw=vwAll")
+        time.sleep(10)
         self.driver.implicitly_wait(20)
 
     def get_url(self):
@@ -55,7 +54,9 @@ class SalesOrder:
             self.url_list.append(i)
 
     def get_data(self):
+        TimeList = []
         self.driver.switch_to.window(self.n[1])  # 切至第二个窗口
+        time.sleep(2)
         for u in self.url_list:
             u = "http://portal.chemchina.com/oa08/dept509/ContractSale.nsf/vwAll/" + u + "?opendocument"
             self.driver.get(u)
@@ -85,7 +86,7 @@ class SalesOrder:
 
             if len(code[0]) == 0:  # 单号为空
                 continue
-            elif int(code[0][:6]) <= 202109:
+            elif int(code[0][:6]) <= 202107:
                 return True
             try:
                 wander_html = self.driver.find_element_by_xpath('//*[@id="DFlow_MindList"]').get_attribute("outerHTML")
@@ -95,7 +96,7 @@ class SalesOrder:
                 time.sleep(3)
                 wander_html = self.driver.find_element_by_xpath('//*[@id="DFlow_MindList"]').get_attribute("outerHTML")
                 print("有进来")
-            if U8_code[0] != "":
+            if U8_code[0] != "" and is_end == "结束":
                 name_list = re.findall(r'<div class="col-md-4"><b>审批人：</b>(.*?)</div>', wander_html)  # 审批人
                 time_list = re.findall(r'<div class="col-md-4"><b>时间：</b>(.*?)</div>', wander_html)  # 时间
                 opinion_list = re.findall(r'<pre class="prettyprint linenums prettyprinted">(.*?)</pre>',
@@ -103,16 +104,14 @@ class SalesOrder:
                 approval_list = re.findall(r"""<div class="col-md-4"><b>审批节点：</b>(.*?)</div>""", wander_html)  # 审批节点
                 for i, j, k, n in zip(approval_list, name_list, time_list, opinion_list):
                     if self.func.GeneralOffice(i):
-                        self.SealTime = k  # 获取 综合管理部盖章 的时间
+                        TimeList.append(k)   # 获取 综合管理部盖章 的时间
                     if self.func.OrderRegistration(i):
-                        self.RegisterTime = k  # 获取 U8销售订单号登记 的时间
-            if self.SealTime.strip() and self.RegisterTime.strip():
+                        TimeList.append(k)
+            if len(TimeList) == 2:
                 self.SalesOrderData = self.SalesOrderData.append(
-                    {'U8销售合同单号': U8_code[0], 'OA合同审批时间': self.SealTime, 'U8系统创建时间': self.RegisterTime})
-                self.SealTime.claer()
-                self.RegisterTime.claer()
-
-
+                    {'U8销售合同单号': U8_code[0], 'OA合同审批时间': TimeList[0], 'U8系统创建时间': TimeList[1]}, ignore_index=True)
+            TimeList.clear()
+        time.sleep(1)
         self.driver.switch_to.window(self.n[0])  # 切换至第一个窗口
         self.driver.find_element_by_class_name("next").click()  # 点击下一页
         self.driver.implicitly_wait(20)
@@ -120,14 +119,15 @@ class SalesOrder:
         return False
 
     def DataFor(self):
-        self.SalesOrderData["OA合同审批时间"] = self.SalesOrderData["OA合同审批时间"].astype(datetime64)
-        self.SalesOrderData["U8系统创建时间"] = self.SalesOrderData['U8系统创建时间'].astype(datetime64)
+        if len(self.SalesOrderData) != 0:
+            self.SalesOrderData["OA合同审批时间"] = self.SalesOrderData["OA合同审批时间"].astype(datetime64)
+            self.SalesOrderData["U8系统创建时间"] = self.SalesOrderData['U8系统创建时间'].astype(datetime64)
 
-        self.SalesOrderData['审批延时/H'] = (
-                (self.SalesOrderData['U8系统创建时间'] - self.SalesOrderData['OA合同审批时间']) / pd.Timedelta(1, 'H')).astype(
-            int)
-        self.SalesOrderData.loc[self.SalesOrderData["审批延时/H"] > 48, "创建及时率"] = "超时"  # 计算出来的审批延时大于3天为超时
-        self.SalesOrderData.loc[self.SalesOrderData["审批延时/H"] <= 48, "创建及时率"] = "正常"  # 小于等于3天为正常
+            self.SalesOrderData['审批延时/H'] = (
+                    (self.SalesOrderData['U8系统创建时间'] - self.SalesOrderData['OA合同审批时间']) / pd.Timedelta(1, 'H')).astype(
+                int)
+            self.SalesOrderData.loc[self.SalesOrderData["审批延时/H"] > 48, "下达及时率"] = "超时"  # 计算出来的审批延时大于3天为超时
+            self.SalesOrderData.loc[self.SalesOrderData["审批延时/H"] <= 48, "下达及时率"] = "正常"  # 小于等于3天为正常
 
     def SaveFile(self):
         path = f"{self.path}/RESULT/SDCS"
@@ -144,6 +144,7 @@ class SalesOrder:
             flag = self.get_data()
             if flag:
                 break
+        self.DataFor()
         self.SaveFile()
         self.driver.quit()
 
