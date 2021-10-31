@@ -148,13 +148,13 @@ if __name__ == '__main__':
     #  当月大于2天的未转换MRP数据筛选
     MRPNow_data = complete_merge_data[complete_merge_data['抓取时间'] >= datetime64(this_month_check)]
 
+    pr_data.to_excel('./RESULT/SCM/OP/采购订单转换及时率.xlsx', sheet_name="当月未转换PR清单", index=False)
     book = load_workbook('./RESULT/SCM/OP/采购订单转换及时率.xlsx')
     writer = pd.ExcelWriter("./RESULT/SCM/OP/采购订单转换及时率.xlsx", engine='openpyxl')
     writer.book = book
     MRPNow_data.to_excel(writer, "当月未转换MRP清单", index=False)
     writer.save()
 
-    pr_data.to_excel('./RESULT/SCM/OP/采购订单转换及时率.xlsx', sheet_name="当月未转换PR清单", index=False)
     book = load_workbook('./RESULT/SCM/OP/采购订单转换及时率.xlsx')
     writer = pd.ExcelWriter("./RESULT/SCM/OP/采购订单转换及时率.xlsx", engine='openpyxl')
     writer.book = book
