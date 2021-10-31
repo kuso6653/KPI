@@ -142,6 +142,6 @@ if __name__ == '__main__':
     book = load_workbook('./RESULT/SCM/OP/采购订单转换及时率.xlsx')
     writer = pd.ExcelWriter("./RESULT/SCM/OP/采购订单转换及时率.xlsx", engine='openpyxl')
     writer.book = book
-    pr_data.to_excel(writer, "未转换MRP", index=False)
+    all_mrp.to_excel(writer, "未转换MRP", index=False)
     writer.save()
     print("%.2f" % float((merge_pr_rows+merge_mrp_rows)/(all_mrp_rows+all_pr_rows)))

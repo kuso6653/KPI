@@ -1,10 +1,20 @@
-import pandas as pd  #######使用内置统计方法聚合数据
-import numpy as np
+# -*- coding:utf-8 -*-
+import pandas as pd
+from pandas import *
 
-df = pd.DataFrame({'key1': ['A', 'A', 'B', 'B', 'A']
-                      , 'key2': ['one', 'two', 'one', 'two', 'one']
-                      , 'data1': [2, 3, 4, 6, 8]
-                      , 'data2': [3, 5, np.nan, 3, 7]})
-print(df)
-df = df.groupby(["key1", "key2"])['data1'].sum()
-print(df)
+df1 = DataFrame([['a', 10, '男'],
+                 ['b', 11, '男'],
+                 ['c', 11, '女'],
+                 ['a', 10, '女'],
+                 ['c', 11, '男']],
+                columns=['name', 'age', 'sex'])
+print("df1:\n%s\n\n" % df1)
+df2 = DataFrame([['a', 10, '男'],
+                 ['b', 11, '女']],
+                columns=['name', 'age', 'sex'])
+print("df2:\n%s\n\n" % df2)
+
+df1 = df1.append(df2)
+df1 = df1.append(df2)
+set_diff_df = df1.drop_duplicates(subset=['name', 'age', 'sex'],keep=False)
+print(set_diff_df)
