@@ -106,8 +106,12 @@ if __name__ == '__main__':
     res = pd.concat(all_data_mdm, axis=0, ignore_index=True)
     res = res.drop_duplicates()
     now_data = now_data[now_data.isnull().any(axis=1)]
+    #  小于当月的历史未维护订单数据筛选
     now_data = now_data.loc[now_data["固定提前期"] == 0]
     now_data = now_data[now_data['启用日期'] < datetime64(this_month_start)]
+    #  当月大于7天的未维护订单数据筛选
+    res = res.loc[res["固定提前期"] == 0]
+    res = res[res['启用日期'] >= datetime64(this_month_start)]
     # now_data['启用日期'] = str(now_data['启用日期']).split(" ")[0]
     res.to_excel('./RESULT/SCM/SP/采购物料维护及时率.xlsx', sheet_name="当月大于7天采购物料维护及时率", index=False)
 
