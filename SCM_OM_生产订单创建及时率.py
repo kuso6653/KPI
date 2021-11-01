@@ -17,7 +17,6 @@ this_month_end = datetime.datetime(now.year, now.month, calendar.monthrange(now.
 # 获取上月首尾日期
 last_month_end = this_month_start - timedelta(days=1)
 last_month_start = datetime.datetime(last_month_end.year, last_month_end.month, 1)
-
 # 将上月首尾日期切割
 _this_month_end = str(this_month_end).split(" ")[0].replace("", "")
 this_month_start = str(this_month_start).split(" ")[0].replace("-", "")
