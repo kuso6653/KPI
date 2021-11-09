@@ -15,16 +15,12 @@ class ArriveTime:
         self.ThisMonthEnd = str(self.ThisMonthEnd).split(" ")[0].replace("-", "")
         self.LastMonthStart = str(self.LastMonthStart).split(" ")[0].replace("-", "")
         self.LastMonthEnd = str(self.LastMonthEnd).split(" ")[0].replace("-", "")
-        # self.GoodsInData = pd.read_excel(
-        #     f"{self.path}/DATA/SCM/OP/到货单列表-{self.LastMonthStart}-{self.ThisMonthEnd}.XLSX",
-        #     usecols=['存货编码', '存货名称', '采购委外订单号', '行号', '制单时间'],
-        #     converters={'行号': int, '存货编码': str, '制单时间': datetime64})
         self.PurchaseInData = pd.read_excel(
-            f"{self.path}/DATA/SCM/OP/采购订单列表-{self.LastMonthStart}-{self.ThisMonthEnd}.XLSX",
+            f"{self.path}/DATA/SCM/OP/采购订单列表-{self.ThisMonthStart}-{self.ThisMonthEnd}.XLSX",
             usecols=['订单编号', '行号', '实际到货日期'],
             converters={'行号': int, '实际到货日期': datetime64})
         self.Prescription = pd.read_excel(
-            f"{self.path}/DATA/SCM/采购时效性统计表-{self.LastMonthStart}-{self.ThisMonthEnd}.XLSX",
+            f"{self.path}/DATA/SCM/采购时效性统计表-{self.ThisMonthStart}-{self.ThisMonthEnd}.XLSX",
             usecols=[0, 1, 6, 7, 9, 11, 12, 14, 15, 16], header=2,
             names=["行号", "采购订单号", "存货编码", "存货名称", "计划到货日期", "采购订单制单时间", "采购订单审核时间",
                    "到货单号", "到货单行号", "到货单制单时间"],
@@ -43,20 +39,17 @@ class ArriveTime:
         ThisMonthArriveData = pd.merge(ThisMonthArriveData, self.PurchaseInData, on=['采购订单号', '采购订单行号'])
 
         # 筛选 实际到货日期 为空的， 用 计划到货日期 补全
-        # ThisMonthArriveData["实际到货日期"][ThisMonthArriveData["实际到货日期"].isnull()] = ThisMonthArriveData['计划到货日期']
         ThisMonthArriveData['实际到货日期'] = ThisMonthArriveData['实际到货日期'].fillna(ThisMonthArriveData['计划到货日期'])
         ThisMonthArriveData['实际到货日期'] = pd.to_datetime(ThisMonthArriveData['实际到货日期'].astype(str)) + pd.to_timedelta(
             '20:00:00')
         ThisMonthNoArriveData = ThisMonthArriveData[ThisMonthArriveData.isnull().any(axis=1)]  #
         ThisMonthArriveData = ThisMonthArriveData[ThisMonthArriveData['到货单制单时间'].notnull()]  #
         ThisMonthArriveData["审批延时/H"] = (
-                (ThisMonthArriveData["到货单制单时间"] - ThisMonthArriveData["实际到货日期"]) / pd.Timedelta(1, 'H')).astype(int)
+                (ThisMonthArriveData["到货单制单时间"] - ThisMonthArriveData["实际到货日期"]))
+
         ThisMonthArriveData.loc[ThisMonthArriveData["审批延时/H"] > 72, "单据状态"] = "逾期"
         ThisMonthArriveData.loc[ThisMonthArriveData["审批延时/H"] <= 72, "单据状态"] = "正常"
         ThisMonthArriveData.loc[ThisMonthArriveData["审批延时/H"] < 0, "单据状态"] = "提前"
-
-        # del ThisMonthArriveData['采购订单制单时间']
-        # del ThisMonthArriveData['审核时间']
 
         ThisMonthArriveData_Order = ['采购订单号', '采购订单行号', '存货编码', '存货名称', '计划到货日期', '实际到货日期', '采购订单制单时间', '采购订单审核时间',
                                      '到货单号', '到货单行号', '到货单制单时间', '审批延时/H', '单据状态']
@@ -76,8 +69,8 @@ class ArriveTime:
     def GetHistoryMonthArriveTime(self):  # 历史未到货清单
         HistoryMonthArriveData = self.Prescription[self.Prescription['计划到货日期'] < self.ThisMonthStart]
         HistoryMonthArriveData = pd.merge(self.PurchaseInData, HistoryMonthArriveData, on=['采购订单号', '采购订单行号'])
-        # HistoryMonthArriveData = HistoryMonthArriveData.rename(columns={'行号': '采购订单行号'})
         HistoryMonthArriveData["实际到货日期"][HistoryMonthArriveData["实际到货日期"].isnull()] = HistoryMonthArriveData['计划到货日期']
+        # 当 采购订单审核时间 或 到货单制单时间 为空值的时候取其数值
         HistoryMonthArriveData = HistoryMonthArriveData[
             (HistoryMonthArriveData["采购订单审核时间"].isnull()) | (HistoryMonthArriveData["到货单制单时间"].isnull())]
         order = ['采购订单号', '采购订单行号', '存货编码', '存货名称', '计划到货日期', '实际到货日期', '采购订单制单时间', '采购订单审核时间', '到货单号', '到货单行号',

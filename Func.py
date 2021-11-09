@@ -71,6 +71,7 @@ def WorkDays(year, month):
             WorkDays.append(day)
     return WorkDays
 
+
 # 获取当月、上月日期
 def GetDate():
     now = datetime.date.today()
@@ -81,7 +82,11 @@ def GetDate():
     LastMonthEnd = ThisMonthStart - timedelta(days=1)
     LastMonthStart = datetime.datetime(LastMonthEnd.year, LastMonthEnd.month, 1)
     return ThisMonthStart, ThisMonthEnd, LastMonthEnd, LastMonthStart
+
+
 # "--------------------------------------------------------------------------------------------"
 
-
-
+def str2sec(x):
+    # 字符串时分秒转换
+    h, m, s = x.strip().split(':')  # .split()函数将其通过':'分隔开，.strip()函数用来除去空格
+    return int(h) + int(m) / 60   # int()函数转换成整数运算
