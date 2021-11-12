@@ -4,90 +4,35 @@ from openpyxl import load_workbook
 
 import Func
 
+EarliestTime = datetime64("2000-01-02")  # 设置工艺路线版本日期的最早期限
 
-class ArriveTime:
+
+class WorkHour:
     def __init__(self):
         self.func = Func
         self.ThisMonthStart, self.ThisMonthEnd, self.LastMonthEnd, self.LastMonthStart = self.func.GetDate()
         self.path = "//10.56.164.127/it&m/KPI"
-        # 将上月首尾日期切割
-        self.ThisMonthStart = str(self.ThisMonthStart).split(" ")[0].replace("-", "")
-        self.ThisMonthEnd = str(self.ThisMonthEnd).split(" ")[0].replace("-", "")
-        self.LastMonthStart = str(self.LastMonthStart).split(" ")[0].replace("-", "")
-        self.LastMonthEnd = str(self.LastMonthEnd).split(" ")[0].replace("-", "")
-        self.PurchaseInData = pd.read_excel(
-            f"{self.path}/DATA/SCM/OP/采购订单列表-{self.ThisMonthStart}-{self.ThisMonthEnd}.XLSX",
-            usecols=['订单编号', '行号', '实际到货日期'],
-            converters={'行号': int, '实际到货日期': datetime64})
-        self.Prescription = pd.read_excel(
-            f"{self.path}/DATA/SCM/采购时效性统计表-{self.ThisMonthStart}-{self.ThisMonthEnd}.XLSX",
-            usecols=[0, 1, 6, 7, 9, 11, 12, 14, 15, 16], header=2,
-            names=["行号", "采购订单号", "存货编码", "存货名称", "计划到货日期", "采购订单制单时间", "采购订单审核时间",
-                   "到货单号", "到货单行号", "到货单制单时间"],
-            converters={'计划到货日期': datetime64, '采购订单制单时间': datetime64, '采购订单审核时间': datetime64, '到货单制单时间': datetime64})
+        self.Routing_data = pd.read_excel(f"{self.path}/DATA/WORKHOUR/工艺路线资料表--含资源.xlsx",
+                                          header=3, usecols=["物料编码", "工作中心", "版本日期", "资源名称", "工时(分子)"],
+                                          converters={'物料编码': str, "工时(分子)": int})
 
-    def mkdir(self, path):
-        self.func.mkdir(path)
+        self.WorkHourData = pd.read_excel(f"{self.path}/DATA/WORKHOUR/报工列表.xlsx",
+                                          usecols=["单据日期", "制单人", "生产订单", "行号",
+                                                   "物料编码", "物料名称", "生产数量", "资源工时1", "资源名称1",
+                                                   "资源工时2", "资源名称2"],
+                                          converters={'行号': str, "资源工时1": int, "资源工时2": int})
 
-    def GetThisMonthArriveTime(self):  # 当月准时到货率 和 当月未到货清单
-        self.Prescription = self.Prescription.dropna(subset=['行号'])  # 去除nan的列
-        self.PurchaseInData = self.PurchaseInData.dropna(subset=['行号'])  # 去除nan的列
-        self.PurchaseInData = self.PurchaseInData.rename(columns={'订单编号': '采购订单号', '行号': '采购订单行号'})
-        self.Prescription = self.Prescription.rename(columns={'行号': '采购订单行号'})
-        ThisMonthArriveData = self.Prescription[self.ThisMonthEnd >= self.Prescription['计划到货日期']]
-        ThisMonthArriveData = ThisMonthArriveData[ThisMonthArriveData['计划到货日期'] >= self.ThisMonthStart]
-        ThisMonthArriveData = pd.merge(ThisMonthArriveData, self.PurchaseInData, on=['采购订单号', '采购订单行号'])
-
-        # 筛选 实际到货日期 为空的， 用 计划到货日期 补全
-        ThisMonthArriveData['实际到货日期'] = ThisMonthArriveData['实际到货日期'].fillna(ThisMonthArriveData['计划到货日期'])
-        ThisMonthArriveData['实际到货日期'] = pd.to_datetime(ThisMonthArriveData['实际到货日期'].astype(str)) + pd.to_timedelta(
-            '20:00:00')
-        ThisMonthNoArriveData = ThisMonthArriveData[ThisMonthArriveData.isnull().any(axis=1)]  #
-        ThisMonthArriveData = ThisMonthArriveData[ThisMonthArriveData['到货单制单时间'].notnull()]  #
-        ThisMonthArriveData["审批延时/H"] = (
-                (ThisMonthArriveData["到货单制单时间"] - ThisMonthArriveData["实际到货日期"]))
-
-        ThisMonthArriveData.loc[ThisMonthArriveData["审批延时/H"] > 72, "单据状态"] = "逾期"
-        ThisMonthArriveData.loc[ThisMonthArriveData["审批延时/H"] <= 72, "单据状态"] = "正常"
-        ThisMonthArriveData.loc[ThisMonthArriveData["审批延时/H"] < 0, "单据状态"] = "提前"
-
-        ThisMonthArriveData_Order = ['采购订单号', '采购订单行号', '存货编码', '存货名称', '计划到货日期', '实际到货日期', '采购订单制单时间', '采购订单审核时间',
-                                     '到货单号', '到货单行号', '到货单制单时间', '审批延时/H', '单据状态']
-        ThisMonthNoArriveData_Order = ['采购订单号', '采购订单行号', '存货编码', '存货名称', '计划到货日期', '实际到货日期', '采购订单制单时间', '采购订单审核时间',
-                                       '到货单号', '到货单行号', '到货单制单时间']
-        ThisMonthArriveData = ThisMonthArriveData[ThisMonthArriveData_Order]
-        ThisMonthNoArriveData = ThisMonthNoArriveData[ThisMonthNoArriveData_Order]
-
-        self.mkdir(self.path + "/RESULT/SCM/OP")
-        ThisMonthArriveData.to_excel(f'{self.path}/RESULT/SCM/OP/demo.xlsx', sheet_name="当月准时到货率", index=False)
-        book = load_workbook(f'{self.path}/RESULT/SCM/OP/demo.xlsx')
-        writer = pd.ExcelWriter(f"{self.path}/RESULT/SCM/OP/demo.xlsx", engine='openpyxl')
-        writer.book = book
-        ThisMonthNoArriveData.to_excel(writer, "当月未到货清单", index=False)
-        writer.save()
-
-    def GetHistoryMonthArriveTime(self):  # 历史未到货清单
-        HistoryMonthArriveData = self.Prescription[self.Prescription['计划到货日期'] < self.ThisMonthStart]
-        HistoryMonthArriveData = pd.merge(self.PurchaseInData, HistoryMonthArriveData, on=['采购订单号', '采购订单行号'])
-        HistoryMonthArriveData["实际到货日期"][HistoryMonthArriveData["实际到货日期"].isnull()] = HistoryMonthArriveData['计划到货日期']
-        # 当 采购订单审核时间 或 到货单制单时间 为空值的时候取其数值
-        HistoryMonthArriveData = HistoryMonthArriveData[
-            (HistoryMonthArriveData["采购订单审核时间"].isnull()) | (HistoryMonthArriveData["到货单制单时间"].isnull())]
-        order = ['采购订单号', '采购订单行号', '存货编码', '存货名称', '计划到货日期', '实际到货日期', '采购订单制单时间', '采购订单审核时间', '到货单号', '到货单行号',
-                 '到货单制单时间']
-        HistoryMonthArriveData = HistoryMonthArriveData[order]
-
-        book = load_workbook(f'{self.path}/RESULT/SCM/OP/demo.xlsx')
-        writer = pd.ExcelWriter(f"{self.path}/RESULT/SCM/OP/demo.xlsx", engine='openpyxl')
-        writer.book = book
-        HistoryMonthArriveData.to_excel(writer, "历史未到货清单", index=False)
-        writer.save()
+    def GetWorkHour(self):
+        # 重新定义 版本日期格式，再转化为datatime64
+        self.Routing_data = self.Routing_data.dropna(subset=['物料编码'])  # 去除nan的列
+        self.Routing_data["版本日期"] = self.Routing_data["版本日期"].str.replace("/", "-").astype("datetime64")
+        self.Routing_data = self.Routing_data[self.Routing_data["版本日期"] > EarliestTime]
+        self.Routing_data = self.Routing_data.drop_duplicates(subset=["物料编码"])  # 去重
 
     def run(self):
-        self.GetThisMonthArriveTime()
-        self.GetHistoryMonthArriveTime()
+        self.GetWorkHour()
 
 
 if __name__ == '__main__':
-    AT = ArriveTime()
-    AT.run()
+    WH = WorkHour()
+    WH.run()
