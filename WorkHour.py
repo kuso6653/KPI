@@ -6,7 +6,7 @@ import Func
 
 
 # EarliestTime = datetime64("2000-01-02")  # 设置工艺路线版本日期的最早期限
-
+order = ['单据号码', '单据日期', '制单人', '生产订单', '行号', '物料编码', '物料名称', '生产数量', '工作中心', '单位标准工时', '总标准工时', '实际报工工时']
 
 # 对比 当月的 实际报工工时，大于0 返回 资源工时1 ，否则 返回 资源工时2
 def FirsSecondChoice(df):
@@ -21,7 +21,7 @@ def GetSumPlanData(Data):
     sum_data_list = []
     for name, group in Data.groupby(["物料编码"]):
         qualified_num = group['工时(分子)'].sum()  # 取合格数量总值保留两位
-        qualified_num = Decimal(qualified_num).quantize(Decimal('0.00'))
+        # qualified_num = Decimal(qualified_num).quantize(Decimal('0.00'))
         group.loc[:, "计划工时"] = qualified_num  # 新建 总合格数量 列
         sum_data_list.append(group.head(1))
     return sum_data_list
@@ -63,7 +63,7 @@ class WorkHour:
                                           header=3, usecols=["物料编码", "工作中心", "版本日期", "版本代号", "资源名称", "工时(分子)"],
                                           converters={'物料编码': str, "工时(分子)": int, "版本代号": int})
 
-        self.WorkHourData = pd.read_excel(f"{self.path}/DATA/WORKHOUR/报工列表-20210901-20210930.xlsx",
+        self.WorkHourData = pd.read_excel(f"{self.path}/DATA/WORKHOUR/报工列表.xlsx",
                                           usecols=["单据日期", "单据号码", "制单人", "生产订单", "行号",
                                                    "物料编码", "物料名称", "生产数量", "资源工时1", "资源名称1",
                                                    "资源工时2", "资源名称2"],
@@ -72,6 +72,16 @@ class WorkHour:
     def GetWorkData(self, group):
 
         group["标准工时"] = group["生产数量"] * group["计划工时"]  # 计算 标准工时
+        del group["工时(分子)"]
+        del group["资源名称"]
+        del group["版本代号"]
+        del group["版本日期"]
+        del group["资源工时1"]
+        del group["资源工时2"]
+        del group["资源名称1"]
+        del group["资源名称2"]
+        group = group.rename(columns={'计划工时': '单位标准工时', '标准工时': '总标准工时'})
+        group = group[order]
         self.AsNameList.append(group)
 
     def GetWorkHour(self):
@@ -136,11 +146,11 @@ class WorkHour:
         self.func.mkdir(path)
 
     def SaveFile(self):
-        self.AsNameList[0].to_excel(f'{self.path}/RESULT/WORKHOUR/Data.xlsx', sheet_name=f"{self.userName[0][0]}",
-                                    index=False)
+        # self.AsNameList[0] = self.AsNameList[0][order]
+        self.AsNameList[0].to_excel(f'{self.path}/RESULT/WORKHOUR/报工工时统计.xlsx', sheet_name=f"{self.userName[0][0]}", index=False)
         for index, values in enumerate(zip(self.AsNameList[1:], self.userName[1:])):
-            SaveBook = load_workbook(f'{self.path}/RESULT/WORKHOUR/Data.xlsx')
-            writer = pd.ExcelWriter(f"{self.path}/RESULT/WORKHOUR/Data.xlsx", engine='openpyxl')
+            SaveBook = load_workbook(f'{self.path}/RESULT/WORKHOUR/报工工时统计.xlsx')
+            writer = pd.ExcelWriter(f"{self.path}/RESULT/WORKHOUR/报工工时统计.xlsx", engine='openpyxl')
             writer.book = SaveBook
             values[0].to_excel(writer, f"{values[1][0]}", index=False)
             writer.save()
