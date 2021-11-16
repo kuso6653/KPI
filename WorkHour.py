@@ -4,7 +4,8 @@ from numpy import datetime64
 from openpyxl import load_workbook
 import Func
 
-EarliestTime = datetime64("2000-01-02")  # 设置工艺路线版本日期的最早期限
+
+# EarliestTime = datetime64("2000-01-02")  # 设置工艺路线版本日期的最早期限
 
 
 # 对比 当月的 实际报工工时，大于0 返回 资源工时1 ，否则 返回 资源工时2
@@ -24,6 +25,18 @@ def GetSumPlanData(Data):
         group.loc[:, "计划工时"] = qualified_num  # 新建 总合格数量 列
         sum_data_list.append(group.head(1))
     return sum_data_list
+
+
+# 获取最大版本代号
+def GetMaxVersionNumber(Data):
+    max_data_list = []
+    for name, group in Data.groupby(["物料编码"]):
+        group = pd.DataFrame(group)  # 新建pandas
+        group = group.sort_values(by='版本代号', ascending=False)  # 降序排序
+        MaxNumber = group.iloc[0, 1]  # 取降序排序第一个 版本代号
+        group = group[group["版本代号"] == MaxNumber]  # 筛选 版本代号 最大的数据
+        max_data_list.append(group)
+    return pd.concat(max_data_list)
 
 
 # 实际工时分组计算合并值
@@ -65,7 +78,7 @@ class WorkHour:
         # 重新定义 版本日期格式，再转化为 datatime64
         self.Routing_data = self.Routing_data.dropna(subset=['物料编码'])  # 去除nan的列
         self.Routing_data["版本日期"] = self.Routing_data["版本日期"].str.replace("/", "-").astype("datetime64")
-        self.Routing_data = self.Routing_data[self.Routing_data["版本日期"] > EarliestTime]
+        # self.Routing_data = self.Routing_data[self.Routing_data["版本日期"] > EarliestTime]
 
         # 筛选 资源名称1，资源名称2 的符合work_list 的 资源名称
         WorkHourData_First = self.WorkHourData[self.WorkHourData['资源名称1'].isin(self.work_list)]
@@ -82,9 +95,15 @@ class WorkHour:
         ZZData = self.Routing_data.loc[self.Routing_data['工作中心'].str.contains('^Z')]  # 模糊查询总装 车间
         DKData = self.Routing_data.loc[self.Routing_data['工作中心'].str.contains('^DK')]  # 模糊查询总装电控 车间
 
+        PXData = GetMaxVersionNumber(PXData)
+        MHData = GetMaxVersionNumber(MHData)
+        JJData = GetMaxVersionNumber(JJData)
+        ZZData = GetMaxVersionNumber(ZZData)
+        DKData = GetMaxVersionNumber(DKData)
+
         for name, group in self.WorkHourData.groupby(["制单人"]):  # 按车间操作人员进行拆分
             group = pd.DataFrame(group)  # 新建pandas
-            group.to_excel(f'{self.path}/RESULT/WORKHOUR/group.xlsx', sheet_name="0", index=False)
+            # group.to_excel(f'{self.path}/RESULT/WORKHOUR/group.xlsx', sheet_name="0", index=False)
             group = pd.concat(GetSumActualData(group), axis=0, ignore_index=True)
             if name == "郭东升":
                 # 对各个车间的 以物料编码 为 主键 将 工时(分子) 进行sum合计，返回的值进行合并
@@ -117,7 +136,8 @@ class WorkHour:
         self.func.mkdir(path)
 
     def SaveFile(self):
-        self.AsNameList[0].to_excel(f'{self.path}/RESULT/WORKHOUR/Data.xlsx', sheet_name=f"{self.userName[0][0]}", index=False)
+        self.AsNameList[0].to_excel(f'{self.path}/RESULT/WORKHOUR/Data.xlsx', sheet_name=f"{self.userName[0][0]}",
+                                    index=False)
         for index, values in enumerate(zip(self.AsNameList[1:], self.userName[1:])):
             SaveBook = load_workbook(f'{self.path}/RESULT/WORKHOUR/Data.xlsx')
             writer = pd.ExcelWriter(f"{self.path}/RESULT/WORKHOUR/Data.xlsx", engine='openpyxl')
