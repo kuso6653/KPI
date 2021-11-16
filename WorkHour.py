@@ -4,9 +4,9 @@ from numpy import datetime64
 from openpyxl import load_workbook
 import Func
 
-
 # EarliestTime = datetime64("2000-01-02")  # 设置工艺路线版本日期的最早期限
 order = ['单据号码', '单据日期', '制单人', '生产订单', '行号', '物料编码', '物料名称', '生产数量', '工作中心', '单位标准工时', '总标准工时', '实际报工工时']
+
 
 # 对比 当月的 实际报工工时，大于0 返回 资源工时1 ，否则 返回 资源工时2
 def FirsSecondChoice(df):
@@ -52,6 +52,11 @@ def GetSumActualData(Data):
 class WorkHour:
     def __init__(self):
         self.userName = []
+        self.WeldingPart = []  # 铆焊车间List
+        self.Assembly = []  # 总装车间List
+        self.AssemblyPX = []  # PX车间List
+        self.AssemblyECC = []  # 电控柜车间List
+        self.Machining = []  # 机加工车间List
         self.AsNameList = []
         self.func = Func
         self.ThisMonthStart, self.ThisMonthEnd, self.LastMonthEnd, self.LastMonthStart = self.func.GetDate()
@@ -82,7 +87,7 @@ class WorkHour:
         del group["资源名称2"]
         group = group.rename(columns={'计划工时': '单位标准工时', '标准工时': '总标准工时'})
         group = group[order]
-        self.AsNameList.append(group)
+        return group
 
     def GetWorkHour(self):
         # 重新定义 版本日期格式，再转化为 datatime64
@@ -119,41 +124,52 @@ class WorkHour:
                 # 对各个车间的 以物料编码 为 主键 将 工时(分子) 进行sum合计，返回的值进行合并
                 Data = pd.concat(GetSumPlanData(PXData), axis=0, ignore_index=True)
                 group = pd.merge(group, Data, on=['物料编码'])
-                self.GetWorkData(group)
+                group = self.GetWorkData(group)
+                self.AssemblyPX.append(group)
                 self.userName.append([name, "总装PX"])
             elif name == "黄鑫凯":
                 Data = pd.concat(GetSumPlanData(DKData), axis=0, ignore_index=True)
                 group = pd.merge(group, Data, on=['物料编码'])
-                self.GetWorkData(group)
+                group = self.GetWorkData(group)
+                self.AssemblyECC.append(group)
                 self.userName.append([name, "总装电控"])
             elif name == "乐美珠":
                 Data = pd.concat(GetSumPlanData(JJData), axis=0, ignore_index=True)
                 group = pd.merge(group, Data, on=['物料编码'])
-                self.GetWorkData(group)
+                group = self.GetWorkData(group)
+                self.Machining.append(group)
                 self.userName.append([name, "机加工"])
             elif name == "吕春华" or name == "夏正棋":
                 Data = pd.concat(GetSumPlanData(ZZData), axis=0, ignore_index=True)
                 group = pd.merge(group, Data, on=['物料编码'])
-                self.GetWorkData(group)
+                group = self.GetWorkData(group)
+                self.Assembly.append(group)
                 self.userName.append([name, "总装"])
             elif name == "杨薇1" or name == "林李旭":
                 Data = pd.concat(GetSumPlanData(MHData), axis=0, ignore_index=True)
                 group = pd.merge(group, Data, on=['物料编码'])
-                self.GetWorkData(group)
+                group = self.GetWorkData(group)
+                self.WeldingPart.append(group)
                 self.userName.append([name, "铆焊"])
 
     def mkdir(self, path):
         self.func.mkdir(path)
 
+    def SaveSheet(self, data, name):  # 新建excel页签并保存数据
+        SaveBook = load_workbook(f'{self.path}/RESULT/WORKHOUR/报工工时统计.xlsx')
+        writer = pd.ExcelWriter(f"{self.path}/RESULT/WORKHOUR/报工工时统计.xlsx", engine='openpyxl')
+        writer.book = SaveBook
+        data.to_excel(writer, f"{name}", index=False)
+        writer.save()
+
     def SaveFile(self):
         # self.AsNameList[0] = self.AsNameList[0][order]
-        self.AsNameList[0].to_excel(f'{self.path}/RESULT/WORKHOUR/报工工时统计.xlsx', sheet_name=f"{self.userName[0][0]}", index=False)
-        for index, values in enumerate(zip(self.AsNameList[1:], self.userName[1:])):
-            SaveBook = load_workbook(f'{self.path}/RESULT/WORKHOUR/报工工时统计.xlsx')
-            writer = pd.ExcelWriter(f"{self.path}/RESULT/WORKHOUR/报工工时统计.xlsx", engine='openpyxl')
-            writer.book = SaveBook
-            values[0].to_excel(writer, f"{values[1][0]}", index=False)
-            writer.save()
+        pd.concat(self.AssemblyPX, axis=0, ignore_index=True).to_excel(f'{self.path}/RESULT/WORKHOUR/报工工时统计.xlsx',
+                                                                       sheet_name="总装PX", index=False)
+        self.SaveSheet(pd.concat(self.AssemblyECC, axis=0, ignore_index=True), "总装电控柜")
+        self.SaveSheet(pd.concat(self.Machining, axis=0, ignore_index=True), "机加工")
+        self.SaveSheet(pd.concat(self.Assembly, axis=0, ignore_index=True), "总装")
+        self.SaveSheet(pd.concat(self.WeldingPart, axis=0, ignore_index=True), "铆焊")
 
     def run(self):
         self.GetWorkHour()
