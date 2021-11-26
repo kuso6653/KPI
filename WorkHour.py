@@ -1,13 +1,15 @@
 from decimal import Decimal
+
+import openpyxl
 import pandas as pd
 from numpy import datetime64
-from openpyxl import load_workbook
+from openpyxl import load_workbook, Workbook
 import Func
 
-
 # EarliestTime = datetime64("2000-01-02")  # 设置工艺路线版本日期的最早期限
-order = ['单据号码', '单据日期', '制单人', '生产批号', '生产订单', '行号', '物料编码', '物料名称', '工序行号', '标准工序', '生产数量',
-         '合格数量', '班组编码', '班组名称', '员工代号', '员工姓名', '工作中心', '单位标准工时', '实际报工工时']
+order = ['单据号码', '单据日期', '制单人', '项目号', '生产订单', '行号', '物料编码', '物料名称', '工序行号', '标准工序', '生产数量',
+         '合格数量', '班组编码', '班组名称', '员工代号', '员工姓名', '工作中心', '单位标准工时', '总标准工时', '实际报工工时']
+
 
 # 对比 当月的 实际报工工时，大于0 返回 资源工时1 ，否则 返回 资源工时2
 def FirsSecondChoice(df):
@@ -57,7 +59,15 @@ class WorkHour:
         self.AssemblyPX = []  # PX车间List
         self.AssemblyECC = []  # 电控柜车间List
         self.Machining = []  # 机加工车间List
-        self.userName = []
+
+        self.WeldingPart_FX = []  # 铆焊车间返修List
+        self.Assembly_FX = []  # 总装车间返修List
+        self.AssemblyPX_FX = []  # PX车间返修List
+        self.AssemblyECC_FX = []  # 电控柜车间返修List
+        self.Machining_FX = []  # 机加工车间返修List
+
+        self.wb = Workbook()
+
         self.func = Func
         self.ThisMonthStart, self.ThisMonthEnd, self.LastMonthEnd, self.LastMonthStart = self.func.GetDate()
         self.path = "//10.56.164.127/it&m/KPI"
@@ -65,7 +75,8 @@ class WorkHour:
 
         self.PlanHourData = pd.DataFrame
         self.Routing_data = pd.read_excel(f"{self.path}/DATA/WORKHOUR/工艺路线资料表--含资源.xlsx",
-                                          header=3, usecols=["物料编码", "工作中心", "版本日期", "版本代号", "资源名称", "工时(分子)", "工序行号", "工序代号"],
+                                          header=3, usecols=["物料编码", "工作中心", "版本日期", "版本代号", "资源名称",
+                                                             "版本说明", "工时(分子)", "工序行号", "工序代号"],
                                           converters={'物料编码': str, "工时(分子)": int, "版本代号": int, "工序行号": str})
 
         self.WorkHourData = pd.read_excel(f"{self.path}/DATA/WORKHOUR/报工列表-20210901-20211130.xlsx",
@@ -73,30 +84,15 @@ class WorkHour:
                                                    "物料编码", "物料名称", "生产数量", "资源工时1", "资源名称1",
                                                    "资源工时2", "资源名称2", "移入工序行号", "移入标准工序", "合格数量",
                                                    "班组编码", "班组名称", "员工代号", "员工姓名"],
-                                          converters={'行号': str, "资源工时1": int, "资源工时2": int, "生产数量": int, '物料编码': str, '移入工序行号': str,
+                                          converters={'行号': str, "资源工时1": int, "资源工时2": int,
+                                                      "生产数量": int, '物料编码': str, '移入工序行号': str,
                                                       '员工代号': str})
         self.WorkHourData = self.WorkHourData.rename(columns={'移入工序行号': '工序行号', '移入标准工序': '标准工序', '生产批号': '项目号'})
         self.Routing_data = self.Routing_data.rename(columns={'工序代号': '标准工序', '工时(分子)': '单位标准工时'})
 
-    def GetWorkData(self, group):
-
-        # group["标准工时"] = group["生产数量"] * group["计划工时"]  # 计算 标准工时
-        del group["资源名称"]
-        del group["版本代号"]
-        del group["版本日期"]
-        del group["资源工时1"]
-        del group["资源工时2"]
-        del group["资源名称1"]
-        del group["资源名称2"]
-        # group = group.rename(columns={'生产批号': '项目号'})
-        group = group[order]
-        return group
-
-    def GetWorkHour(self):
         # 重新定义 版本日期格式，再转化为 datatime64
         self.Routing_data = self.Routing_data.dropna(subset=['物料编码'])  # 去除nan的列
         self.Routing_data["版本日期"] = self.Routing_data["版本日期"].str.replace("/", "-").astype("datetime64")
-        # self.Routing_data = self.Routing_data[self.Routing_data["版本日期"] > EarliestTime]
 
         # 筛选 资源名称1，资源名称2 的符合work_list 的 资源名称
         WorkHourData_First = self.WorkHourData[self.WorkHourData['资源名称1'].isin(self.work_list)]
@@ -106,56 +102,86 @@ class WorkHour:
         self.WorkHourData["实际报工工时"] = self.WorkHourData['资源工时1'] - self.WorkHourData['资源工时2']
         # 放入函数 FirsSecondChoice 对比取值
         self.WorkHourData["实际报工工时"] = self.WorkHourData.apply(FirsSecondChoice, axis=1)
+
+        self.RepairData = self.Routing_data[self.Routing_data["版本说明"] == "返修"]
+        self.StandardData = self.Routing_data[self.Routing_data["版本说明"] != "返修"]
+        self.RepairData = GetMaxVersionNumber(self.RepairData)  # 获取版本最大值
+        self.StandardData = GetMaxVersionNumber(self.StandardData)  # 获取版本最大值
+
+        self.RepairProductData = self.WorkHourData.loc[self.WorkHourData['生产订单'].str.contains(r'^F')]  # 模糊查询以F开头的
+        self.ProductData = self.WorkHourData.loc[self.WorkHourData['生产订单'].str.contains(r'^(?!F).*')]  # 模糊查询不以F开头的
+
+    def GetWorkData(self, group):
+
+        group["总标准工时"] = group["合格数量"] * group["单位标准工时"]  # 计算 标准工时
+        del group["资源名称"]
+        del group["版本代号"]
+        del group["版本日期"]
+        del group["资源工时1"]
+        del group["资源工时2"]
+        del group["资源名称1"]
+        del group["资源名称2"]
+        # group = group.rename(columns={'生产批号': '项目号'})
+        group = group[order]
+        group = group.sort_values(by='物料编码', ascending=True)  # 升序排列
+        return group
+
+    def GetWorkHour(self):
+        # RepairData.to_excel(f'{self.path}/RESULT/WORKHOUR/RepairData.xlsx', sheet_name="0", index=False)
         # # 使用正则表达式尽心模糊匹配
         # PXData = self.Routing_data.loc[self.Routing_data['工作中心'].str.contains('^P')]  # 模糊查询总装PX 车间
-        # MHData = self.Routing_data.loc[self.Routing_data['工作中心'].str.contains('^M')]  # 模糊查询铆焊 车间
-        # JJData = self.Routing_data.loc[self.Routing_data['工作中心'].str.contains('^J')]  # 模糊查询机加工 车间
-        # ZZData = self.Routing_data.loc[self.Routing_data['工作中心'].str.contains('^Z')]  # 模糊查询总装 车间
-        # DKData = self.Routing_data.loc[self.Routing_data['工作中心'].str.contains('^DK')]  # 模糊查询总装电控 车间
 
-        # PXData = GetMaxVersionNumber(PXData)
-        # MHData = GetMaxVersionNumber(MHData)
-        # JJData = GetMaxVersionNumber(JJData)
-        # ZZData = GetMaxVersionNumber(ZZData)
-        # DKData = GetMaxVersionNumber(DKData)
-
-        self.Routing_data = GetMaxVersionNumber(self.Routing_data)  # 获取版本最大值
-
-        for name, group in self.WorkHourData.groupby(["制单人"]):  # 按车间操作人员进行拆分
+        for name, group in self.ProductData.groupby(["制单人"]):  # 按车间操作人员进行拆分  正常生产订单部分
             group = pd.DataFrame(group)  # 新建pandas
-            # group.to_excel(f'{self.path}/RESULT/WORKHOUR/group.xlsx', sheet_name="0", index=False)
-            # group = pd.concat(GetSumActualData(group), axis=0, ignore_index=True)
             if name == "郭东升":
                 # 对各个车间的 以物料编码 为 主键 将 工时(分子) 进行sum合计，返回的值进行合并
-                # Data = pd.concat(GetSumPlanData(self.Routing_data), axis=0, ignore_index=True)
-                group = pd.merge(group, self.Routing_data, on=['物料编码', '工序行号', '标准工序'])
+                group = pd.merge(group, self.StandardData, on=['物料编码', '工序行号', '标准工序'])
                 group = self.GetWorkData(group)
-                self.userName.append([name, "总装PX"])
                 self.AssemblyPX.append(group)
             elif name == "黄鑫凯":
                 # Data = pd.concat(GetSumPlanData(self.Routing_data), axis=0, ignore_index=True)
-                group = pd.merge(group, self.Routing_data, on=['物料编码', '工序行号', '标准工序'])
+                group = pd.merge(group, self.StandardData, on=['物料编码', '工序行号', '标准工序'])
                 group = self.GetWorkData(group)
-                self.userName.append([name, "总装电控"])
                 self.AssemblyECC.append(group)
             elif name == "乐美珠":
                 # Data = pd.concat(GetSumPlanData(self.Routing_data), axis=0, ignore_index=True)
-                group = pd.merge(group, self.Routing_data, on=['物料编码', '工序行号', '标准工序'])
+                group = pd.merge(group, self.StandardData, on=['物料编码', '工序行号', '标准工序'])
                 group = self.GetWorkData(group)
-                self.userName.append([name, "机加工"])
                 self.Machining.append(group)
             elif name == "吕春华" or name == "夏正棋":
                 # Data = pd.concat(GetSumPlanData(self.Routing_data), axis=0, ignore_index=True)
-                group = pd.merge(group, self.Routing_data, on=['物料编码', '工序行号', '标准工序'])
+                group = pd.merge(group, self.StandardData, on=['物料编码', '工序行号', '标准工序'])
                 group = self.GetWorkData(group)
-                self.userName.append([name, "总装"])
                 self.Assembly.append(group)
             elif name == "杨薇1" or name == "林李旭":
                 # Data = pd.concat(GetSumPlanData(self.Routing_data), axis=0, ignore_index=True)
-                group = pd.merge(group, self.Routing_data, on=['物料编码', '工序行号', '标准工序'])
+                group = pd.merge(group, self.StandardData, on=['物料编码', '工序行号', '标准工序'])
                 group = self.GetWorkData(group)
-                self.userName.append([name, "铆焊"])
                 self.WeldingPart.append(group)
+
+        for name, group in self.RepairProductData.groupby(["制单人"]):  # 按车间操作人员进行拆分 返修部分
+            group = pd.DataFrame(group)  # 新建pandas
+            if name == "郭东升":
+                # 对各个车间的 以物料编码 为 主键 将 工时(分子) 进行sum合计，返回的值进行合并
+                group = pd.merge(group, self.RepairData, on=['物料编码', '工序行号', '标准工序'])
+                group = self.GetWorkData(group)
+                self.AssemblyPX_FX.append(group)
+            elif name == "黄鑫凯":
+                group = pd.merge(group, self.RepairData, on=['物料编码', '工序行号', '标准工序'])
+                group = self.GetWorkData(group)
+                self.AssemblyECC_FX.append(group)
+            elif name == "乐美珠":
+                group = pd.merge(group, self.RepairData, on=['物料编码', '工序行号', '标准工序'])
+                group = self.GetWorkData(group)
+                self.Machining_FX.append(group)
+            elif name == "吕春华" or name == "夏正棋":
+                group = pd.merge(group, self.RepairData, on=['物料编码', '工序行号', '标准工序'])
+                group = self.GetWorkData(group)
+                self.Assembly_FX.append(group)
+            elif name == "杨薇1" or name == "林李旭":
+                group = pd.merge(group, self.RepairData, on=['物料编码', '工序行号', '标准工序'])
+                group = self.GetWorkData(group)
+                self.WeldingPart_FX.append(group)
 
     def mkdir(self, path):
         self.func.mkdir(path)
@@ -167,19 +193,69 @@ class WorkHour:
         data.to_excel(writer, f"{name}", index=False)
         writer.save()
 
+    def FullSaveSheet(self, name):  # 新建空excel页签并保存数据
+        data = pd.DataFrame()
+        SaveBook = load_workbook(f'{self.path}/RESULT/WORKHOUR/报工工时统计.xlsx')
+        writer = pd.ExcelWriter(f"{self.path}/RESULT/WORKHOUR/报工工时统计.xlsx", engine='openpyxl')
+        writer.book = SaveBook
+        data.to_excel(writer, f"{name}", index=False)
+        writer.save()
+
     def SaveFile(self):
         # self.AsNameList[0] = self.AsNameList[0][order]
-        pd.concat(self.AssemblyPX, axis=0, ignore_index=True).to_excel(f'{self.path}/RESULT/WORKHOUR/报工工时统计.xlsx',
-                                                                       sheet_name="总装PX", index=False)
-        self.SaveSheet(pd.concat(self.AssemblyECC, axis=0, ignore_index=True), "总装电控柜")
-        self.SaveSheet(pd.concat(self.Machining, axis=0, ignore_index=True), "机加工")
-        self.SaveSheet(pd.concat(self.Assembly, axis=0, ignore_index=True), "总装")
-        self.SaveSheet(pd.concat(self.WeldingPart, axis=0, ignore_index=True), "铆焊")
+
+        self.wb.save(f'{self.path}/RESULT/WORKHOUR/报工工时统计.xlsx')
+        try:
+            self.SaveSheet(pd.concat(self.AssemblyECC, axis=0, ignore_index=True), "总装电控")
+        except:
+            self.FullSaveSheet("总装电控")
+        try:
+            self.SaveSheet(pd.concat(self.AssemblyPX, axis=0, ignore_index=True), "总装PX")
+        except:
+            self.FullSaveSheet("总装PX")
+        try:
+            self.SaveSheet(pd.concat(self.Machining, axis=0, ignore_index=True), "机加工")
+        except:
+            self.FullSaveSheet("机加工")
+        try:
+            self.SaveSheet(pd.concat(self.Assembly, axis=0, ignore_index=True), "总装")
+        except:
+            self.FullSaveSheet("总装")
+        try:
+            self.SaveSheet(pd.concat(self.WeldingPart, axis=0, ignore_index=True), "铆焊")
+        except:
+            self.FullSaveSheet("铆焊")
+        try:
+            self.SaveSheet(pd.concat(self.AssemblyECC_FX, axis=0, ignore_index=True), "总装电控返修")
+        except:
+            self.FullSaveSheet("总装电控返修")
+        try:
+            self.SaveSheet(pd.concat(self.Machining_FX, axis=0, ignore_index=True), "机加工返修")
+        except:
+            self.FullSaveSheet("机加工返修")
+        try:
+            self.SaveSheet(pd.concat(self.Assembly_FX, axis=0, ignore_index=True), "总装返修")
+        except:
+            self.FullSaveSheet("总装返修")
+        try:
+            self.SaveSheet(pd.concat(self.WeldingPart_FX, axis=0, ignore_index=True), "铆焊返修")
+        except:
+            self.FullSaveSheet("铆焊返修")
+        try:
+            self.SaveSheet(pd.concat(self.AssemblyPX_FX, axis=0, ignore_index=True), "总装PX返修")
+        except:
+            self.FullSaveSheet("总装PX返修")
+
+        workbook = openpyxl.load_workbook(f'{self.path}/RESULT/WORKHOUR/报工工时统计.xlsx')
+        del workbook["Sheet"]
+        workbook.save(f'{self.path}/RESULT/WORKHOUR/报工工时统计.xlsx')
 
     def run(self):
         self.GetWorkHour()
         self.func.mkdir(self.path + '/RESULT/WORKHOUR')
         self.SaveFile()
+        # del self.wb["Sheet"]
+        # self.wb.save(f'{self.path}/RESULT/WORKHOUR/报工工时统计.xlsx')
 
 
 if __name__ == '__main__':
