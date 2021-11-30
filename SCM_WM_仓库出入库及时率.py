@@ -58,7 +58,7 @@ class Warehouse:
         # 采购入库单列表 和 采购时效性统计表 合并
         self.PurchaseInData = pd.merge(self.PurchaseInData, self.MaterialInData, on=['入库单号', '行号'])
         self.PurchaseInData['审批时间/H'] = ((self.PurchaseInData['入库制单时间'] - self.PurchaseInData['检验审核时间'])
-                                       / pd.Timedelta(1, 'H')).astype(int)  # 制单时间相减，然后减去 质检的审核时间
+                                         / pd.Timedelta(1, 'H')).astype(int)  # 制单时间相减，然后减去 质检的审核时间
         # 将天数转化为小时数
         self.PurchaseInData.loc[self.PurchaseInData["审批时间/H"] > 72, "单据状态"] = "超时"  # 计算出来的审批延时大于72为超时
         self.PurchaseInData.loc[self.PurchaseInData["审批时间/H"] <= 72, "单据状态"] = "正常"  # 小于等于72为正常

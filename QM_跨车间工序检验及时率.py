@@ -24,10 +24,10 @@ class CrossWorkshop:
         Process_Inspection_data = pd.read_excel(
             f"{self.path}/DATA/QM/工序检验单列表-{self.ThisMonthStart}-{self.ThisMonthEnd}.XLSX",
             usecols=['工序检验单号', '生产批号', '生产订单号', '生产订单行号', '报检单号', '存货编码', '物料描述', '报检数量', '审核时间', '生产部门名称'],
-            converters={'报检单号': str, '生产订单号': str, '存货编码': str})
+            converters={'报检单号': str, '生产订单号': str, '存货编码': str, '审核时间': datetime64})
         Process_Inspection_Application_data = pd.read_excel(
             f"{self.path}/DATA/QM/工序报检单列表-{self.ThisMonthStart}-{self.ThisMonthEnd}.XLSX",
-            usecols=['审核时间', '工序报检单号'], converters={'工序报检单号': str})
+            usecols=['审核时间', '工序报检单号'], converters={'工序报检单号': str, '审核时间': datetime64})
 
         # 重命名报检单号为工序报检单号，别分命名报检和检验审核时间
         Process_Inspection_data = Process_Inspection_data.rename(columns={'报检单号': '工序报检单号', '审核时间': '检验审核时间'})

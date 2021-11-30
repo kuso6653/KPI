@@ -4,6 +4,7 @@ import calendar
 import datetime
 from datetime import timedelta
 import openpyxl
+from numpy import datetime64
 
 import Func
 
@@ -26,10 +27,10 @@ class Deliver:
     def GetDeliver(self):
         SaleOutData = pd.read_excel(f"{self.path}/DATA/SCM/LOGISTIC/销售出库单列表-{self.ThisMonthStart}-{self.ThisMonthEnd}.XLSX",
                                     usecols=['发货单号', '审核时间', '存货编码'],
-                                    converters={'发货单号': str, '存货编码': str})
+                                    converters={'发货单号': str, '存货编码': str, '审核时间': datetime64})
         InvoiceData = pd.read_excel(f"{self.path}/DATA/SCM/LOGISTIC/发货单列表-{self.ThisMonthStart}-{self.ThisMonthEnd}.XLSX",
                                     usecols=['发货单号', '审核时间', '存货编码'],
-                                    converters={'发货单号': str, '存货编码': str})
+                                    converters={'发货单号': str, '存货编码': str,'审核时间': datetime64})
 
         SaleOutData = SaleOutData.rename(columns={'审核时间': '销售出库单审核时间'})
         InvoiceData = InvoiceData.rename(columns={'审核时间': '发货单审核时间'})
