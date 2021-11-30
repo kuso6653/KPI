@@ -7,8 +7,9 @@ from openpyxl import load_workbook, Workbook
 import Func
 
 # EarliestTime = datetime64("2000-01-02")  # 设置工艺路线版本日期的最早期限
-order = ['单据号码', '单据日期', '制单人', '项目号', '生产订单', '行号', '物料编码', '物料名称', '工序行号', '标准工序', '生产数量',
-         '合格数量', '班组编码', '班组名称', '员工代号', '员工姓名', '工作中心', '单位标准工时', '总标准工时', '实际报工工时']
+order = ['单据号码', '单据日期', '制单人', '项目号', '生产订单', '行号', '物料编码', '物料名称', '工序行号', '标准工序', '工序名称',
+         '生产数量', '合格数量', '班组编码', '班组名称', '员工代号', '员工姓名', '工作中心', '工作中心名称', '单位标准工时', '总标准工时',
+         '实际报工工时']
 
 
 # 对比 当月的 实际报工工时，大于0 返回 资源工时1 ，否则 返回 资源工时2
@@ -75,19 +76,20 @@ class WorkHour:
 
         self.PlanHourData = pd.DataFrame
         self.Routing_data = pd.read_excel(f"{self.path}/DATA/WORKHOUR/工艺路线资料表--含资源.xlsx",
-                                          header=3, usecols=["物料编码", "工作中心", "版本日期", "版本代号", "资源名称",
+                                          header=3, usecols=["物料编码", "工作中心", "工作中心名称", "版本日期", "版本代号", "资源名称",
                                                              "版本说明", "工时(分子)", "工序行号", "工序代号"],
                                           converters={'物料编码': str, "工时(分子)": int, "版本代号": int, "工序行号": str})
 
         self.WorkHourData = pd.read_excel(f"{self.path}/DATA/WORKHOUR/报工列表-20210901-20211130.xlsx",
                                           usecols=["单据日期", "单据号码", "制单人", "生产批号", "生产订单", "行号",
                                                    "物料编码", "物料名称", "生产数量", "资源工时1", "资源名称1",
-                                                   "资源工时2", "资源名称2", "移入工序行号", "移入标准工序", "合格数量",
+                                                   "资源工时2", "资源名称2", "移入工序行号", "移入标准工序", "移入工序说明", "合格数量",
                                                    "班组编码", "班组名称", "员工代号", "员工姓名"],
                                           converters={'行号': str, "资源工时1": int, "资源工时2": int,
                                                       "生产数量": int, '物料编码': str, '移入工序行号': str,
                                                       '员工代号': str})
-        self.WorkHourData = self.WorkHourData.rename(columns={'移入工序行号': '工序行号', '移入标准工序': '标准工序', '生产批号': '项目号'})
+        self.WorkHourData = self.WorkHourData.rename(columns={'移入工序行号': '工序行号', '移入标准工序': '标准工序', '移入工序说明': '工序名称',
+                                                              '生产批号': '项目号'})
         self.Routing_data = self.Routing_data.rename(columns={'工序代号': '标准工序', '工时(分子)': '单位标准工时'})
 
         # 重新定义 版本日期格式，再转化为 datatime64
@@ -123,7 +125,7 @@ class WorkHour:
         del group["资源名称2"]
         # group = group.rename(columns={'生产批号': '项目号'})
         group = group[order]
-        group = group.sort_values(by='物料编码', ascending=True)  # 升序排列
+        group = group.sort_values(by=['生产订单', '行号', '物料编码', '工序行号', '标准工序'], ascending=True)  # 升序排列
         return group
 
     def GetWorkHour(self):
