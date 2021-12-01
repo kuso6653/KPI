@@ -143,8 +143,8 @@ class PurchaseConversion:
         self.merge_data['未及时率/H'] = (
                 (self.merge_data['制单时间'] - self.merge_data['审批日期']) / pd.Timedelta(1, 'H')).astype(
             int)
-        self.merge_data.loc[self.merge_data["未及时率/H"] > 48, "创建及时率"] = "超时"  # 计算出来的审批延时大于3天为超时
-        self.merge_data.loc[self.merge_data["未及时率/H"] <= 48, "创建及时率"] = "正常"  # 小于等于3天为正常
+        self.merge_data.loc[self.merge_data["未及时率/H"] > 384, "创建及时率"] = "超时"  # 计算出来的审批延时大于16天为超时
+        self.merge_data.loc[self.merge_data["未及时率/H"] <= 384, "创建及时率"] = "正常"  # 小于等于16天为正常
 
     def save_data(self):
         path = f"{self.path}/RESULT/SCM/OP"
