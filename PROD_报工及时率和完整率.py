@@ -18,9 +18,9 @@ class WorkReport:
             converters={'单据号码': str, '生产订单': str, '合格数量': float})
         self.ProductionData = pd.read_excel(
             f"{self.path}/DATA/PROD/生产订单列表-{self.ThisMonthStart}-{self.ThisMonthEnd}.XLSX",
-            usecols=['生产订单号', '完工日期', '行号'],
+            usecols=['生产订单号', '实际完工日期', '行号'],
             converters={'生产订单号': str})
-        self.ProductionData = self.ProductionData.rename(columns={'生产订单号': '生产订单', '完工日期': '生产订单完工日期'})
+        self.ProductionData = self.ProductionData.rename(columns={'生产订单号': '生产订单'})
 
     def mkdir(self, path):
         self.func.mkdir(path)
@@ -53,9 +53,9 @@ class WorkReport:
         WorkReportDateMerge.loc[WorkReportDateMerge["生产数量"] < WorkReportDateMerge["总合格数量"], "完整状态"] = "超定额生产"
 
         EndWorkReport = pd.merge(WorkReportDateMerge, self.ProductionData, on=["生产订单", "行号"])
-        EndWorkReport.loc[EndWorkReport["报工单审核时间"] <= EndWorkReport["生产订单完工日期"], "报工状态"] = "及时"
-        EndWorkReport.loc[EndWorkReport["报工单审核时间"] > EndWorkReport["生产订单完工日期"], "报工状态"] = "不及时"
-        order = ['单据号码', '生产订单', '行号', '物料编码', '物料名称', '移入标准工序', '生产数量', '总合格数量', '完整状态', '生产订单完工日期', '报工单审核时间', '报工状态']
+        EndWorkReport.loc[EndWorkReport["报工单审核时间"] <= EndWorkReport["实际完工日期"], "报工状态"] = "及时"
+        EndWorkReport.loc[EndWorkReport["报工单审核时间"] > EndWorkReport["实际完工日期"], "报工状态"] = "不及时"
+        order = ['单据号码', '生产订单', '行号', '物料编码', '物料名称', '移入标准工序', '生产数量', '总合格数量', '完整状态', '实际完工日期', '报工单审核时间', '报工状态']
         EndWorkReport = EndWorkReport[order]
         self.SaveFile(EndWorkReport)
 

@@ -58,9 +58,9 @@ class ArriveTime:
         ThisMonthNoArriveData = ThisMonthNoArriveData[ThisMonthNoArriveData_Order]
 
         self.mkdir(self.path + "/RESULT/SCM/OP")
-        ThisMonthArriveData.to_excel(f'{self.path}/RESULT/SCM/OP/demo.xlsx', sheet_name="当月准时到货率", index=False)
-        book = load_workbook(f'{self.path}/RESULT/SCM/OP/demo.xlsx')
-        writer = pd.ExcelWriter(f"{self.path}/RESULT/SCM/OP/demo.xlsx", engine='openpyxl')
+        ThisMonthArriveData.to_excel(f'{self.path}/RESULT/SCM/OP/准时到货率.xlsx', sheet_name="当月准时到货率", index=False)
+        book = load_workbook(f'{self.path}/RESULT/SCM/OP/准时到货率.xlsx')
+        writer = pd.ExcelWriter(f"{self.path}/RESULT/SCM/OP/准时到货率.xlsx", engine='openpyxl')
         writer.book = book
         ThisMonthNoArriveData.to_excel(writer, "当月未到货清单", index=False)
         writer.save()
@@ -76,8 +76,8 @@ class ArriveTime:
                  '到货单制单时间']
         HistoryMonthArriveData = HistoryMonthArriveData[order]
 
-        book = load_workbook(f'{self.path}/RESULT/SCM/OP/demo.xlsx')
-        writer = pd.ExcelWriter(f"{self.path}/RESULT/SCM/OP/demo.xlsx", engine='openpyxl')
+        book = load_workbook(f'{self.path}/RESULT/SCM/OP/准时到货率.xlsx')
+        writer = pd.ExcelWriter(f"{self.path}/RESULT/SCM/OP/准时到货率.xlsx", engine='openpyxl')
         writer.book = book
         HistoryMonthArriveData.to_excel(writer, "历史未到货清单", index=False)
         writer.save()

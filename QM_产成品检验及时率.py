@@ -8,6 +8,7 @@ class FinishedProduct:
         self.func = Func
         self.ThisMonthStart, self.ThisMonthEnd, self.LastMonthEnd, self.LastMonthStart = self.func.GetDate()
         # 将上月首尾日期切割
+        self.LastMonthStart = str(self.LastMonthStart).split(" ")[0].replace("-", "")
         self.ThisMonthStart = str(self.ThisMonthStart).split(" ")[0].replace("-", "")
         self.ThisMonthEnd = str(self.ThisMonthEnd).split(" ")[0].replace("-", "")
         self.path = "//10.56.164.127/it&m/KPI"
@@ -18,7 +19,7 @@ class FinishedProduct:
     def GetFinishedProduct(self):
         # 产成品检验
         # 产成品检验单审核时间-产成品报检单审核时间<24H　
-        ProductionData = pd.read_excel(f"{self.path}/DATA/QM/生产时效性统计表-{self.ThisMonthStart}-{self.ThisMonthEnd}.xlsx",
+        ProductionData = pd.read_excel(f"{self.path}/DATA/QM/生产时效性统计表-{self.LastMonthStart}-{self.ThisMonthEnd}.xlsx",
                                        usecols=['检验单号', '报检审核时间', '检验审核时间', '生产订单号码', '行号', '生产批号',
                                                 '部门名称', '物料编码', '物料名称', '报检数量'],
                                        header=2,

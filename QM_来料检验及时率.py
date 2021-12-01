@@ -10,6 +10,7 @@ class MaterialInspection:
         self.ThisMonthStart, self.ThisMonthEnd, self.LastMonthEnd, self.LastMonthStart = self.func.GetDate()
         self.path = "//10.56.164.127/it&m/KPI"
         # 将上月首尾日期切割
+        self.LastMonthStart = str(self.LastMonthStart).split(" ")[0].replace("-", "")
         self.ThisMonthStart = str(self.ThisMonthStart).split(" ")[0].replace("-", "")
         self.ThisMonthEnd = str(self.ThisMonthEnd).split(" ")[0].replace("-", "")
 
@@ -17,7 +18,7 @@ class MaterialInspection:
         self.func.mkdir(path)
 
     def GetPurchaseIn(self):
-        PurchaseInData = pd.read_excel(f"{self.path}/DATA/SCM/采购时效性统计表-{self.ThisMonthStart}-{self.ThisMonthEnd}.XLSX",
+        PurchaseInData = pd.read_excel(f"{self.path}/DATA/SCM/采购时效性统计表-{self.LastMonthStart}-{self.ThisMonthEnd}.XLSX",
                                        usecols=[1, 6, 7, 12, 19, 22, 26, 30], header=2,
                                        names=["订单号", "存货编码", "存货名称", "订单制单时间", "报检单号", "报检审核时间", "检验审核时间", "入库制单时间"],
                                        converters={'订单制单时间': datetime64, '报检审核时间': datetime64, '检验审核时间': datetime64,
