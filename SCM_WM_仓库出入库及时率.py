@@ -18,10 +18,11 @@ class Warehouse:
         self.path = "//10.56.164.127/it&m/KPI"
 
         # 将本月月首尾日期切割
+        self.LastMonthStart = str(self.LastMonthStart).split(" ")[0].replace("-", "")
         self.ThisMonthStart = str(self.ThisMonthStart).split(" ")[0].replace("-", "")
         self.ThisMonthEnd = str(self.ThisMonthEnd).split(" ")[0].replace("-", "")
         self.PurchaseInData = pd.read_excel(
-            f"{self.path}/DATA/SCM/采购时效性统计表-{self.ThisMonthStart}-{self.ThisMonthEnd}.XLSX",
+            f"{self.path}/DATA/SCM/采购时效性统计表-{self.LastMonthStart}-{self.ThisMonthEnd}.XLSX",
             usecols=[1, 6, 7, 12, 22, 26, 28, 29, 30], header=3,
             names=["订单号", "存货编码", "存货名称", "订单制单时间", "报检审核时间", "检验审核时间", '入库单号', '行号', "入库制单时间"],
             converters={'订单制单时间': datetime64, '报检审核时间': datetime64,
