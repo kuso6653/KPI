@@ -72,6 +72,17 @@ def WorkDays(year, month):
     return WorkDays
 
 
+# 获取当月每天日期函数
+def EveryDays(year, month):
+    # 利用日历函数，创建截取工作日日期
+    cal = calendar.Calendar()
+    WorkDays = []  # 创建工作日数组
+    for week in cal.monthdayscalendar(int(year), int(month)):
+        for i, day in enumerate(week):
+            WorkDays.append(day)
+    return WorkDays
+
+
 # 获取当月、上月日期
 def GetDate():
     now = datetime.date.today()
@@ -89,4 +100,4 @@ def GetDate():
 def str2sec(x):
     # 字符串时分秒转换
     h, m, s = x.strip().split(':')  # .split()函数将其通过':'分隔开，.strip()函数用来除去空格
-    return int(h) + int(m) / 60   # int()函数转换成整数运算
+    return int(h) + int(m) / 60  # int()函数转换成整数运算
