@@ -71,7 +71,7 @@ class WorkHour:
 
         self.func = Func
         self.ThisMonthStart, self.ThisMonthEnd, self.LastMonthEnd, self.LastMonthStart = self.func.GetDate()
-        self.path = "//10.56.164.127/it&m/KPI"
+        self.path = "//10.56.164.228/KPI"
         self.work_list = ['打磨', '大、小件划线', '焊接', '冷作', '修毛刺', '人工工时', '水压试验', '攻螺纹、修毛刺、清洁', '清洁']
 
         self.PlanHourData = pd.DataFrame

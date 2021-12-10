@@ -14,7 +14,7 @@ class SalesOrder:
     def __init__(self):
         self.func = Func
         self.txt = self.func.ReadTxT()
-        self.path = "//10.56.164.127/it&m/KPI"
+        self.path = "//10.56.164.228/KPI"
 
         self.driver = webdriver.Chrome()  # 创建对象，启动谷歌浏览器
         js = 'window.open("");'  # 通过执行js，开启一个新的窗口

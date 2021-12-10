@@ -8,7 +8,7 @@ class WorkReport:
         self.WorkReportList = []
         self.func = Func
         self.ThisMonthStart, self.ThisMonthEnd, self.LastMonthEnd, self.LastMonthStart = self.func.GetDate()
-        self.path = "//10.56.164.127/it&m/KPI"
+        self.path = "//10.56.164.228/KPI"
         # 将上月首尾日期切割
         self.ThisMonthStart = str(self.ThisMonthStart).split(" ")[0].replace("-", "")
         self.ThisMonthEnd = str(self.ThisMonthEnd).split(" ")[0].replace("-", "")

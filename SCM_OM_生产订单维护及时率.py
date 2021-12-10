@@ -13,7 +13,7 @@ class OrderMaintenance:
     def __init__(self):
         self.func = Func
         self.ThisMonthStart, self.ThisMonthEnd, self.LastMonthEnd, self.LastMonthStart = self.func.GetDate()
-        self.path = "//10.56.164.127/it&m/KPI"
+        self.path = "//10.56.164.228/KPI"
 
     def mkdir(self, path):
         self.func.mkdir(path)

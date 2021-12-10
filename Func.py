@@ -39,7 +39,7 @@ def RelevantPersonnel(approval):
 # "--------------------------------------------------------------------------------------------"
 # 读取指定文件
 def ReadTxT():
-    with open("//10.56.164.127/it&m/员工手册.txt") as f:
+    with open("//10.56.164.228/KPI/员工手册.txt") as f:
         txt = f.read()
         f.close()
     return txt
@@ -61,26 +61,26 @@ def ReformDays(Days):
 def WorkDays(year, month):
     # 利用日历函数，创建截取工作日日期
     cal = calendar.Calendar()
-    WorkDays = []  # 创建工作日数组
+    WorkDay = []  # 创建工作日数组
     for week in cal.monthdayscalendar(int(year), int(month)):
         for i, day in enumerate(week):
             # 为0或者大于等于5的为休息日
             if day == 0 or i >= 5:
                 continue
             # 否则加入数组
-            WorkDays.append(day)
-    return WorkDays
+            WorkDay.append(day)
+    return WorkDay
 
 
 # 获取当月每天日期函数
 def EveryDays(year, month):
     # 利用日历函数，创建截取工作日日期
     cal = calendar.Calendar()
-    WorkDays = []  # 创建工作日数组
+    WorkDay = []  # 创建工作日数组
     for week in cal.monthdayscalendar(int(year), int(month)):
         for i, day in enumerate(week):
-            WorkDays.append(day)
-    return WorkDays
+            WorkDay.append(day)
+    return WorkDay
 
 
 # 获取当月、上月日期
