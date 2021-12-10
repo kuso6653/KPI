@@ -42,7 +42,7 @@ class OrderConversion:
     def ContrastData(self, BaseData, NewBase):
         BaseData = BaseData.dropna(subset=['物料编码'])  # 去除nan的列
         NewBase = NewBase.dropna(subset=['物料编码'])  # 去除nan的列
-        out_data = pd.merge(BaseData, NewBase.drop(labels=['抓取时间'], axis=1),
+        out_data = pd.merge(BaseData, NewBase.drop(labels=['抓取时间', '是否客供料'], axis=1),
                             on=['物料编码', '物料名称', '需求跟踪号', '需求跟踪行号', '物料属性'])
         self.MRPScreenList.append(out_data)
 
@@ -66,10 +66,11 @@ class OrderConversion:
             if flag < 3:
                 try:
                     base_data = pd.read_excel(f"{self.path}/DATA/SCM/OP/MRP计划维护--全部{year}-{last_month}-{work_day}.XLSX",
-                                              usecols=['物料编码', '物料名称', '需求跟踪号', '需求跟踪行号', '物料属性'],
+                                              usecols=['物料编码', '物料名称', '需求跟踪号', '需求跟踪行号', '物料属性', '是否客供料'],
                                               converters={'物料编码': int, '需求跟踪行号': int}
                                               )
                     base_data = base_data.loc[base_data["物料属性"] == "采购"]
+                    base_data = base_data.loc[base_data["是否客供料"].isnull()]
                     catch_data = datetime64(f"{year}-{last_month}-{work_day}")
                     base_data['抓取时间'] = catch_data
                     BaseDataList.append(base_data)
@@ -80,7 +81,7 @@ class OrderConversion:
             else:
                 try:
                     new_data = pd.read_excel(f"{self.path}/DATA/SCM/OP/MRP计划维护--全部{year}-{this_month}-{work_day}.XLSX",
-                                             usecols=['物料编码', '物料名称', '需求跟踪号', '需求跟踪行号', '物料属性'],
+                                             usecols=['物料编码', '物料名称', '需求跟踪号', '需求跟踪行号', '物料属性', '是否客供料'],
                                              converters={'物料编码': int, '需求跟踪行号': int}
                                              )
                     self.MRPNewDataList.append(new_data)
@@ -89,6 +90,7 @@ class OrderConversion:
                 catch_data = datetime64(f"{year}-{this_month}-{work_day}")
                 new_data['抓取时间'] = catch_data
                 new_data = new_data.loc[new_data["物料属性"] == "采购"]
+                new_data = new_data.loc[new_data["是否客供料"].isnull()]
                 BaseDataList.append(new_data)  # 新添加新的base
                 self.ContrastData(BaseDataList[0], new_data)  # 合并检查是否存在一样的
                 del (BaseDataList[0])  # 删除第一个base

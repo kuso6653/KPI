@@ -44,9 +44,10 @@ class OrderCreation:
         self.Routing_data = self.Routing_data[self.Routing_data["版本日期"] > EarliestTime]
         self.Routing_data = self.Routing_data.drop_duplicates(subset=["物料编码"])  # 去重
         self.ProductionData = self.ProductionData[self.ProductionData["制单时间"] > self.ThisMonthStart]
+        self.Material_data = self.Material_data[self.Material_data["启用日期"] > self.ThisMonthStart]
         # 合并生成当月数据在导入到U8中进行再查询
         self.ThisMonthData = pd.merge(self.ProductionData, self.Material_data, how="left", on=['物料编码'])
-        self.ThisMonthData.to_excel(f'{self.path}/RESULT/SCM/OM/当月物料查询表.xlsx', sheet_name="当月物料查询表", index=False)
+        # self.ThisMonthData.to_excel(f'{self.path}/RESULT/SCM/OM/当月物料查询表.xlsx', sheet_name="当月物料查询表", index=False)
         # 当月 启用日期 为空的物料无旧物料
         self.OldMaterialData = self.ThisMonthData[self.ThisMonthData["启用日期"].isnull()]  # 旧物料
         del self.OldMaterialData['计划默认属性']
