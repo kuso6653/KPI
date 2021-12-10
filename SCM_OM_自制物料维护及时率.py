@@ -12,7 +12,7 @@ class SelfMaterial:
         self.SelfMaterialList = []
         self.func = Func
         self.ThisMonthStart, self.ThisMonthEnd, self.LastMonthEnd, self.LastMonthStart = self.func.GetDate()
-        self.path = "//10.56.164.228/KPI"
+        self.path = Func.Path()
 
     def ContrastData(self, BaseData, NewData):
         BaseData = BaseData.dropna(subset=['存货编码'])  # 去除nan的列

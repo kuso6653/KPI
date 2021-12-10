@@ -9,7 +9,7 @@ class ArriveTime:
     def __init__(self):
         self.func = Func
         self.ThisMonthStart, self.ThisMonthEnd, self.LastMonthEnd, self.LastMonthStart = self.func.GetDate()
-        self.path = "//10.56.164.228/KPI"
+        self.path = Func.Path()
         # 将上月首尾日期切割
         self.ThisMonthStart = str(self.ThisMonthStart).split(" ")[0].replace("-", "")
         self.ThisMonthEnd = str(self.ThisMonthEnd).split(" ")[0].replace("-", "")

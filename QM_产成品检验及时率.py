@@ -11,7 +11,7 @@ class FinishedProduct:
         self.LastMonthStart = str(self.LastMonthStart).split(" ")[0].replace("-", "")
         self.ThisMonthStart = str(self.ThisMonthStart).split(" ")[0].replace("-", "")
         self.ThisMonthEnd = str(self.ThisMonthEnd).split(" ")[0].replace("-", "")
-        self.path = "//10.56.164.228/KPI"
+        self.path = Func.Path()
 
     def mkdir(self, path):
         self.func.mkdir(path)

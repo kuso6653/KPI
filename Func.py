@@ -95,9 +95,12 @@ def GetDate():
     return ThisMonthStart, ThisMonthEnd, LastMonthEnd, LastMonthStart
 
 
-# "--------------------------------------------------------------------------------------------"
-
 def str2sec(x):
     # 字符串时分秒转换
     h, m, s = x.strip().split(':')  # .split()函数将其通过':'分隔开，.strip()函数用来除去空格
     return int(h) + int(m) / 60  # int()函数转换成整数运算
+
+
+# "--------------------------------------------------------------------------------------------"
+def Path():
+    return "//10.56.164.228/KPI"

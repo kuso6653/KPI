@@ -13,7 +13,7 @@ class PurchaseConversion:
         self.func = Func
         self.txt = self.func.ReadTxT()
         self.ThisMonthStart, self.ThisMonthEnd, self.LastMonthEnd, self.LastMonthStart = self.func.GetDate()
-        self.path = "//10.56.164.228/KPI"
+        self.path = Func.Path()
 
         # 将上月首尾日期切割
         self.LastMonthStart = str(self.LastMonthStart).split(" ")[0].replace("-", "")

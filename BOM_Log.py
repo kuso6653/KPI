@@ -6,7 +6,6 @@ from openpyxl import load_workbook, Workbook
 import pandas as pd
 
 
-
 # -*- coding:utf-8 -*-
 # EqualRe = re.findall("(^=)", "dsfasdf")
 # BOMRe = re.findall("[B][O][M]", "Password:TH@123456，FunType:OM，Mode：保存，Data")
@@ -76,10 +75,17 @@ class BOM:
             if self.cursor == 2:
                 flag = 0
                 if HaveRow(value):
-                    self.BOMData = self.BOMData.append({"cProNo": lines[index + 1].replace('cProNo', '').replace(',', '').replace('"', '').replace(':', '').replace(' ', '').replace('\n', ''),
-                                                        "cFaInvCode": lines[index + 2].replace('cFaInvCode', '').replace(',', '').replace('"', '').replace(':', '').replace(' ', '').replace('\n', ''),
-                                                        "time": self.TagTime.replace('时间:','').replace('\n', '')},
+                    self.BOMData = self.BOMData.append({"cProNo": lines[index + 1].replace('cProNo', '').replace(',',
+                                                                                                                 '').replace(
+                        '"', '').replace(':', '').replace(' ', '').replace('\n', ''),
+                                                        "cFaInvCode": lines[index + 2].replace('cFaInvCode',
+                                                                                               '').replace(',',
+                                                                                                           '').replace(
+                                                            '"', '').replace(':', '').replace(' ', '').replace('\n',
+                                                                                                               ''),
+                                                        "time": self.TagTime.replace('时间:', '').replace('\n', '')},
                                                        ignore_index=True)
+
     def run(self):
         self.ThisMonthStart = str(self.ThisMonthStart).split(" ")[0]
         this_month = self.ThisMonthStart.split("-")[1]
@@ -88,9 +94,8 @@ class BOM:
         EveryDays = self.func.WorkDays(year, this_month)  # 取本月所有日期
         EveryDays = self.func.ReformDays(EveryDays)  # 改造
 
-
         for i in EveryDays:
-            this_date = str(year)+str(month)+str(i)
+            this_date = str(year) + str(month) + str(i)
             try:
                 FileOpen = open(f'./U8接口{this_date}_u8log.txt', "rt", encoding="utf-8")
                 lines = FileOpen.readlines()
