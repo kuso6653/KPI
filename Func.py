@@ -15,8 +15,8 @@ def mkdir(path):
 
 # "--------------------------------------------------------------------------------------------"
 # OA 截取字段匹配判断逻辑
-def GeneralOffice(approval):
-    if approval.find("提交") != -1 and approval.find("综合管理部盖章") != -1:
+def GeneralOffice(approval):  # 新旧oa 的部门管理签字盖章修改
+    if approval.find("提交") != -1 and (approval.find("综合管理部盖章") != -1 or approval.find("人事行政部盖章") != -1):
         return True
     else:
         return False

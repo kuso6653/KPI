@@ -24,7 +24,7 @@ class SalesOrder:
         self.driver.switch_to.window(self.n[0])  # 切换至第一个窗口
         self.url_list = []
         self.link_name_list = []
-        self.SalesOrderData = pd.DataFrame(columns=('U8销售合同单号', 'OA合同审批时间', 'U8系统创建时间'))
+        self.SalesOrderData = pd.DataFrame(columns=('U8销售合同单号', '申请人', '申请部门', 'OA合同审批时间', 'U8系统创建时间'))
 
     def mkdir(self, path):
         self.func.mkdir(path)
@@ -83,6 +83,8 @@ class SalesOrder:
             U8_code = re.findall(
                 r'<input name="fldU8HeTongBH" value="(.*?)"',  # U8销售合同单号
                 information_html)
+            name = re.findall(r'<input name="ApplyPsnCN" value="(.*?)" id="ApplyPsnCN" ', information_html)  # 申请人
+            dept = re.findall(r'<input name="ApplyDept" value="(.*?)" id="ApplyDept"', information_html)  # 申请部门
 
             if len(code[0]) == 0:  # 单号为空
                 continue
@@ -104,12 +106,13 @@ class SalesOrder:
                 approval_list = re.findall(r"""<div class="col-md-4"><b>审批节点：</b>(.*?)</div>""", wander_html)  # 审批节点
                 for i, j, k, n in zip(approval_list, name_list, time_list, opinion_list):
                     if self.func.GeneralOffice(i):
-                        TimeList.append(k)   # 获取 综合管理部盖章 的时间
+                        TimeList.append(k)  # 获取 综合管理部盖章 的时间
                     if self.func.OrderRegistration(i):
                         TimeList.append(k)
             if len(TimeList) == 2:
                 self.SalesOrderData = self.SalesOrderData.append(
-                    {'U8销售合同单号': U8_code[0], 'OA合同审批时间': TimeList[0], 'U8系统创建时间': TimeList[1]}, ignore_index=True)
+                    {'U8销售合同单号': U8_code[0], '申请人': name[0], '申请部门': dept[0], 'OA合同审批时间': TimeList[0],
+                     'U8系统创建时间': TimeList[1]}, ignore_index=True)
             TimeList.clear()
         time.sleep(1)
         self.driver.switch_to.window(self.n[0])  # 切换至第一个窗口
