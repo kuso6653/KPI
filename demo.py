@@ -1,21 +1,37 @@
-from OracleHelper import OracleHelper
+
 import pandas as pd
+from sqlalchemy import create_engine
+import pymssql
 
-def data_gaizao(data):
-    global dict_username
-    # 对数据进行清洗
-    # 导入字典，替换人名
-    data.loc[:, "USER_NAME"] = data["USER_NAME"].replace(dict_username)
-    return data
+from PyOdbc import Pyodbc
+
+data1 = [
+    [5, "法外狂徒", "男"],
+    [6, "姬霓太美", "女"],
+    [7, "可视化", "无"]
+]
+# engine = create_engine('mysql+pymysql://%s:%s@%s:%d/%s' % (sql_user, sql_passwd, sql_host, sql_port, sql_db))
+# engine = create_engine('mysql+pymssql://sa:Chem123#@10.56.164.228:3306/demo2?charset=utf8')
 
 
-if __name__ == '__main__':
 
-    # 链接数据库
-    SqlOracle = OracleHelper("T5_ENTITY", "thsoft", "10.56.164.22:1521/THPLM")
+USERNAME = 'sa'
+PASSWORD = 'Chem123#'
+HOST = '10.56.164.228'
+PORT = '1433'
+DATABASE = 'demo2'
 
-    sql_create = "select CODE, NAME from TN_A_PROJECT t"
-    sql_data = pd.DataFrame(SqlOracle.find_sql(sql_create),columns=['code', 'name'])
-    dict_username = dict(zip(sql_data['code'], sql_data['name']))
-    print(sql_data)
+DB_URL = 'mysql+pymysql://{}:{}@{}:{}/{}?charset=utf8'.format(USERNAME, PASSWORD, HOST, PORT, DATABASE)
+
+SQLALCHEMY_DATABASE_URI = DB_URL
+
+# 动态追踪修改设置，如未设置只会提示警告
+SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+# 查询时会显示原始sql语句
+SQLALCHEMY_ECHO = True
+
+engine = create_engine(DB_URL)
+df = pd.DataFrame(data1, columns=["id", "姓名", "性别"])
+df.to_sql("demo2", engine, if_exists='append')
 
