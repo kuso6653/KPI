@@ -116,7 +116,7 @@ class OrderConversion:
         self.pr_data.reset_index()
         #  当月大于2天的未转换MRP数据筛选
         MRPNow_data = self.GroupMRPData[self.GroupMRPData['抓取时间'] >= datetime64(self.this_month_check)]
-        self.mkdir(self.path + 'RESULT/SCM/OP')
+        self.mkdir(self.path + '/RESULT/SCM/OP')
         self.pr_data.to_excel(f'{self.path}/RESULT/SCM/OP/采购订单转换及时率.xlsx', sheet_name="当月未转换PR清单", index=False)
         book = load_workbook(f'{self.path}/RESULT/SCM/OP/采购订单转换及时率.xlsx')
         writer = pd.ExcelWriter(f"{self.path}/RESULT/SCM/OP/采购订单转换及时率.xlsx", engine='openpyxl')
@@ -125,7 +125,7 @@ class OrderConversion:
         writer.save()
 
     def HistoryNotConverted(self):  # 历史未转换MRP清单
-        self.mkdir(self.path + 'RESULT/SCM/OP')
+        self.mkdir(self.path + '/RESULT/SCM/OP')
         #  小于当月的历史未转换MRP数据筛选
         MRPHistory_data = self.GroupMRPData[self.GroupMRPData['抓取时间'] < datetime64(self.this_month_check)]
         book = load_workbook(f'{self.path}/RESULT/SCM/OP/采购订单转换及时率.xlsx')

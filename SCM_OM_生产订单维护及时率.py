@@ -25,7 +25,7 @@ class OrderMaintenance:
         # 材料出库及时率
         ECNData = pd.read_excel(f"{self.path}/DATA/SCM/OM/ECN单列表-{self.ThisMonthStart}-{self.ThisMonthEnd}.XLSX",
                                 usecols=['单据编号', '生产订单号', '审核日期'],
-                                converters={'审核日期': datetime64})
+                                converters={'审核日期': datetime64, '单据编号': str})
         # '母件编码', '母件名称', '旧子件编码',
         # '旧子件名称', '旧子件基本用量', '新子件编码', '新子件名称', '新子件基本用量',
         ECNDealData = pd.read_excel(f"{self.path}/DATA/SCM/OM/ECN处理单列表-{self.ThisMonthStart}-{self.ThisMonthEnd}.XLSX",

@@ -51,7 +51,7 @@ class CrossWorkshop:
         self.SaveFile(Process_Inspection_all)
 
     def SaveFile(self, Process_Inspection_all):
-        self.mkdir(self.path+"RESULT/QM")
+        self.mkdir(self.path+"/RESULT/QM")
         Process_Inspection_all.to_excel(f'{self.path}/RESULT/QM/跨车间工序检验及时率.xlsx', sheet_name="跨车间工序检验及时率", index=False)
 
     def run(self):
