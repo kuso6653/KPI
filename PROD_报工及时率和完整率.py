@@ -18,7 +18,7 @@ class WorkReport:
             usecols=['单据号码', '生产订单', '行号', '物料编码', '物料名称', '移入标准工序', '合格数量', '审核时间', '生产数量'],
             converters={'单据号码': str, '生产订单': str, '合格数量': float})
         self.ProductionData = pd.read_excel(
-            f"{self.path}/DATA/PROD/生产订单列表-{self.ThisMonthStart}-{self.ThisMonthEnd}.XLSX",
+            f"{self.path}/DATA/PROD/生产订单列表.XLSX",
             usecols=['生产订单号', '实际完工日期', '行号'],
             converters={'生产订单号': str})
         self.ProductionData = self.ProductionData.rename(columns={'生产订单号': '生产订单'})

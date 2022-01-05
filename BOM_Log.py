@@ -9,6 +9,7 @@ import pandas as pd
 # -*- coding:utf-8 -*-
 # EqualRe = re.findall("(^=)", "dsfasdf")
 # BOMRe = re.findall("[B][O][M]", "Password:TH@123456，FunType:OM，Mode：保存，Data")
+from OracleHelper import OracleHelper
 
 
 def HaveLog(strRE):  # 判断该行是否有等号
@@ -51,14 +52,10 @@ class BOM:
         self.TagTime = ""
         self.wb = Workbook()
         self.wb.save('./BOM.xlsx')
-
-    # def saveSheet(self, this_date, BOMData):
-    #     SaveBook = load_workbook('./BOM.xlsx')
-    #     writer = pd.ExcelWriter('./BOM.xlsx', engine='openpyxl')
-    #     writer.book = SaveBook
-    #     BOMData.to_excel(writer, f"U8BOM_Log_{this_date}", index=False)
-    #     writer.save()
-    #     self.oneStr = self.oneStr + 1
+        sql_PRO = "select t.code,t.name,t.customername from TN_A_PROJECT t"
+        SqlOracle = OracleHelper("T5_ENTITY", "thsoft", "10.56.164.22:1521/THPLM")
+        sql_PRO_list = SqlOracle.find_sql(sql_PRO)
+        self.PROData = pd.DataFrame(sql_PRO_list, columns=['cProNo', 'name', 'customername'])
 
     def getTXT(self, lines, this_date):
         flag = 1
@@ -102,10 +99,14 @@ class BOM:
                 self.getTXT(lines, this_date)
             except:
                 continue
+        self.BOMData = pd.merge(self.BOMData, self.PROData, how="left", on="cProNo")
+        max_data_list = []
+        for name, group in self.BOMData.groupby(["cProNo", "cFaInvCode"]):
+            group = pd.DataFrame(group)  # 新建pandas
+            group = group.sort_values(by='time', ascending=False)  # 降序排序
+            max_data_list.append(group.head(1))
+        self.BOMData = pd.concat(max_data_list, axis=0, ignore_index=True)
         self.BOMData.to_excel('./BOM.xlsx', index=False)
-        # workbook = openpyxl.load_workbook('./BOM.xlsx')
-        # del workbook["Sheet"]
-        # workbook.save('./BOM.xlsx')
 
 
 if __name__ == '__main__':

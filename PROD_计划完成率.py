@@ -21,7 +21,7 @@ class Plan:
             f"{self.path}/DATA/PROD/产成品入库单列表-{self.ThisMonthStart}-{self.ThisMonthEnd}.XLSX",
             usecols=['表体生产订单号', '生产订单行号', '制单时间', '产品编码'],
             converters={'表体生产订单号': str, '制单时间': datetime64})
-        ProductionData = pd.read_excel(f"{self.path}/DATA/PROD/生产订单列表-{self.ThisMonthStart}-{self.ThisMonthEnd}.XLSX",
+        ProductionData = pd.read_excel(f"{self.path}/DATA/PROD/生产订单列表.XLSX",
                                        usecols=['生产订单号', '物料名称', '实际完工日期', '行号'],
                                        converters={'生产订单号': str, '实际完工日期': datetime64})
 
