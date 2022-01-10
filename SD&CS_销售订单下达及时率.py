@@ -24,7 +24,12 @@ class SalesOrder:
         self.driver.switch_to.window(self.n[0])  # 切换至第一个窗口
         self.url_list = []
         self.link_name_list = []
-        self.SalesOrderData = pd.DataFrame(columns=('U8销售合同单号', '申请人', '申请部门', 'OA合同审批时间', 'U8系统创建时间'))
+        self.SalesOrderDataOA = pd.DataFrame(columns=('U8销售合同单号', '申请人', '申请部门', 'OA合同审批时间'))
+        self.SalesOrderDataU8 = pd.read_excel(f"{self.path}/DATA/SDCS/销售订单列表.XLSX", usecols=['订单号', '制单时间'],
+                                              converters={'制单时间': datetime64})
+        self.SalesOrderDataU8 = self.SalesOrderDataU8.rename(columns={'制单时间': 'U8系统创建时间', '订单号': 'U8销售合同单号'})
+        self.SalesOrderDataU8 = self.SalesOrderDataU8.drop_duplicates(subset=["U8销售合同单号"])  # 去重关键列
+        self.SalesOrderDataU8 = self.SalesOrderDataU8.dropna(subset=['U8销售合同单号'])  # 去除nan的列
 
     def mkdir(self, path):
         self.func.mkdir(path)
@@ -88,7 +93,7 @@ class SalesOrder:
 
             if len(code[0]) == 0:  # 单号为空
                 continue
-            elif int(code[0][:6]) <= 202107:
+            elif int(code[0][:6]) <= 202109:
                 return True
             try:
                 wander_html = self.driver.find_element_by_xpath('//*[@id="DFlow_MindList"]').get_attribute("outerHTML")
@@ -110,9 +115,9 @@ class SalesOrder:
                     if self.func.OrderRegistration(i):
                         TimeList.append(k)
             if len(TimeList) == 2:
-                self.SalesOrderData = self.SalesOrderData.append(
+                self.SalesOrderDataOA = self.SalesOrderDataOA.append(
                     {'U8销售合同单号': U8_code[0], '申请人': name[0], '申请部门': dept[0], 'OA合同审批时间': TimeList[0],
-                     'U8系统创建时间': TimeList[1]}, ignore_index=True)
+                     }, ignore_index=True)
             TimeList.clear()
         time.sleep(1)
         self.driver.switch_to.window(self.n[0])  # 切换至第一个窗口
@@ -122,21 +127,22 @@ class SalesOrder:
         return False
 
     def DataFor(self):
-        if len(self.SalesOrderData) != 0:
-            self.SalesOrderData["OA合同审批时间"] = self.SalesOrderData["OA合同审批时间"].astype(datetime64)
-            self.SalesOrderData["U8系统创建时间"] = self.SalesOrderData['U8系统创建时间'].astype(datetime64)
+        if len(self.SalesOrderDataOA) != 0:
+            self.SalesOrderDataOA = pd.merge(self.SalesOrderDataU8,self.SalesOrderDataOA, on=["U8销售合同单号"])
+            self.SalesOrderDataOA["OA合同审批时间"] = self.SalesOrderDataOA["OA合同审批时间"].astype(datetime64)
+            self.SalesOrderDataOA["U8系统创建时间"] = self.SalesOrderDataOA['U8系统创建时间'].astype(datetime64)
 
-            self.SalesOrderData['审批延时/H'] = (
-                    (self.SalesOrderData['U8系统创建时间'] - self.SalesOrderData['OA合同审批时间']) / pd.Timedelta(1, 'H')).astype(
+            self.SalesOrderDataOA['审批延时/H'] = (
+                    (self.SalesOrderDataOA['U8系统创建时间'] - self.SalesOrderDataOA['OA合同审批时间']) / pd.Timedelta(1, 'H')).astype(
                 int)
-            self.SalesOrderData.loc[self.SalesOrderData["审批延时/H"] > 48, "下达及时率"] = "超时"  # 计算出来的审批延时大于3天为超时
-            self.SalesOrderData.loc[self.SalesOrderData["审批延时/H"] <= 48, "下达及时率"] = "正常"  # 小于等于3天为正常
+            self.SalesOrderDataOA.loc[self.SalesOrderDataOA["审批延时/H"] > 48, "下达及时率"] = "超时"  # 计算出来的审批延时大于3天为超时
+            self.SalesOrderDataOA.loc[self.SalesOrderDataOA["审批延时/H"] <= 48, "下达及时率"] = "正常"  # 小于等于3天为正常
 
     def SaveFile(self):
         path = f"{self.path}/RESULT/SDCS"
         self.mkdir(path)
         file_path = path + '/' + '销售订单下达及时率' + '.xlsx'
-        self.SalesOrderData.to_excel(file_path, index=False)
+        self.SalesOrderDataOA.to_excel(file_path, index=False)
         print("success")
 
     def run(self):

@@ -85,7 +85,7 @@ class WorkHour:
                                                              "版本说明", "工时(分子)", "工序行号", "工序代号"],
                                           converters={'物料编码': str, "工时(分子)": int, "版本代号": int, "工序行号": str})
 
-        self.WorkHourData = pd.read_excel(f"{self.path}/DATA/WORKHOUR/报工列表-20211201-20211231.xlsx",
+        self.WorkHourData = pd.read_excel(f"{self.path}/DATA/WORKHOUR/报工列表.xlsx",
                                           usecols=["单据日期", "单据号码", "制单人", "表头备注", "生产批号", "生产订单", "行号",
                                                    "物料编码", "物料名称", "生产数量", "资源工时1", "资源名称1",
                                                    "资源工时2", "资源名称2", "移入工序行号", "移入标准工序", "移入工序说明", "合格数量",

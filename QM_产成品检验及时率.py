@@ -19,7 +19,7 @@ class FinishedProduct:
     def GetFinishedProduct(self):
         # 产成品检验
         # 产成品检验单审核时间-产成品报检单审核时间<24H　
-        ProductionData = pd.read_excel(f"{self.path}/DATA/QM/生产时效性统计表-{self.LastMonthStart}-{self.ThisMonthEnd}.xlsx",
+        ProductionData = pd.read_excel(f"{self.path}/DATA/QM/生产时效性统计表.xlsx",
                                        usecols=['检验单号', '报检审核时间', '检验审核时间', '生产订单号码', '行号', '生产批号',
                                                 '部门名称', '物料编码', '物料名称', '报检数量'],
                                        header=2,

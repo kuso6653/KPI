@@ -27,11 +27,11 @@ class OrderConversion:
         OtherThisMonthStart = str(self.ThisMonthStart).split(" ")[0].replace("-", "")
         OtherLastMonthStart = str(self.LastMonthStart).split(" ")[0].replace("-", "")
         OtherThisMonthEnd = str(self.ThisMonthEnd).split(" ")[0].replace("-", "")
-        self.po_data = pd.read_excel(f"{self.path}/DATA/SCM/OP/采购订单列表-{OtherLastMonthStart}-{OtherThisMonthEnd}.XLSX",
+        self.po_data = pd.read_excel(f"{self.path}/DATA/SCM/OP/采购订单列表.XLSX",
                                      usecols=['请购单号', '存货编码', '存货名称', '行号'],
                                      converters={'请购单号': str, '订单编号': int, '行号': int, '存货编码': int}
                                      )
-        self.pr_data = pd.read_excel(f"{self.path}/DATA/SCM/OP/请购单列表-{OtherThisMonthStart}-{OtherThisMonthEnd}.XLSX",
+        self.pr_data = pd.read_excel(f"{self.path}/DATA/SCM/OP/请购单列表.XLSX",
                                      usecols=['单据号', '存货编码', '存货名称', '行号'],
                                      converters={'单据号': str, '行号': int, '存货编码': int}
                                      )

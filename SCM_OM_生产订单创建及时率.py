@@ -50,10 +50,11 @@ class OrderCreation:
         self.ProductionData = pd.read_excel(
             f"{self.path}/DATA/PROD/生产订单列表.XLSX",
             usecols=['生产订单号', '行号', '物料编码', '物料名称', '生产批号', '制单时间', '类型'],
-            converters={'生产订单号': str, '制单时间': datetime64, '物料编码': str, '生产批号': str})
+            converters={'生产订单号': str, '物料编码': str, '生产批号': str})
+        self.ProductionData['制单时间'] = self.ProductionData['制单时间'].astype(datetime64)
         self.ProductionData = self.ProductionData.dropna(subset=['生产批号'])  # 去除nan的列
         self.ProductionData['生产批号'] = self.ProductionData['生产批号'].str[:5]  # 截取前五位
-        self.Material_data = pd.read_excel(f"{self.path}/DATA/SCM/存货档案{self.OtherMonthEnd}.XLSX",
+        self.Material_data = pd.read_excel(f"{self.path}/DATA/SCM/存货档案2022-02-01.XLSX",
                                            usecols=['存货编码', '计划默认属性', '启用日期'],
                                            converters={'启用日期': datetime64, "存货编码": str})
 
@@ -133,7 +134,7 @@ class BOM:
     def __init__(self):
         self.func = Func
         self.ThisMonthStart, self.ThisMonthEnd, self.LastMonthEnd, self.LastMonthStart = self.func.GetDate()
-
+        self.path = Func.Path()
         self.BOMList = []
         self.oneStr = 1
         self.cursor = 0  # 设置游标
@@ -184,7 +185,7 @@ class BOM:
         for i in EveryDays:
             this_date = str(year) + str(month) + str(i)
             try:
-                FileOpen = open(f'./U8接口{this_date}_u8log.txt', "rt", encoding="utf-8")
+                FileOpen = open(f'{self.path}/DATA/SCM/OM/U8接口{this_date}_u8log.txt', "rt", encoding="utf-8")
                 lines = FileOpen.readlines()
                 self.getTXT(lines, this_date)
             except:

@@ -20,7 +20,7 @@ class PurchaseConversion:
         self.ThisMonthStart = str(self.ThisMonthStart).split(" ")[0].replace("-", "")
         self.ThisMonthEnd = str(self.ThisMonthEnd).split(" ")[0].replace("-", "")
 
-        self.Purchase_in_data = pd.read_excel(f"{self.path}/DATA/SCM/OP/采购订单列表-{self.LastMonthStart}-{self.ThisMonthEnd}.XLSX",
+        self.Purchase_in_data = pd.read_excel(f"{self.path}/DATA/SCM/OP/采购订单列表.XLSX",
                                               usecols=['存货编码', '存货名称', '订单编号', '主计量', '数量', '制单时间'],
                                               converters={'存货编码': str, '订单编号': str, '制单时间': datetime64}
                                               )

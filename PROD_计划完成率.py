@@ -18,7 +18,7 @@ class Plan:
 
     def GetPlan(self):
         GoodsInData = pd.read_excel(
-            f"{self.path}/DATA/PROD/产成品入库单列表-{self.ThisMonthStart}-{self.ThisMonthEnd}.XLSX",
+            f"{self.path}/DATA/PROD/产成品入库单列表.XLSX",
             usecols=['表体生产订单号', '生产订单行号', '制单时间', '产品编码'],
             converters={'表体生产订单号': str, '制单时间': datetime64})
         ProductionData = pd.read_excel(f"{self.path}/DATA/PROD/生产订单列表.XLSX",

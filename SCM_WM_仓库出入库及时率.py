@@ -22,7 +22,7 @@ class Warehouse:
         self.ThisMonthStart = str(self.ThisMonthStart).split(" ")[0].replace("-", "")
         self.ThisMonthEnd = str(self.ThisMonthEnd).split(" ")[0].replace("-", "")
         self.PurchaseInData = pd.read_excel(
-            f"{self.path}/DATA/SCM/采购时效性统计表-{self.LastMonthStart}-{self.ThisMonthEnd}.XLSX",
+            f"{self.path}/DATA/SCM/采购时效性统计表.XLSX",
             usecols=[1, 6, 7, 12, 22, 26, 28, 29, 30], header=3,
             names=["订单号", "存货编码", "存货名称", "订单制单时间", "报检审核时间", "检验审核时间", '入库单号', '行号', "入库制单时间"],
             converters={'订单制单时间': datetime64, '报检审核时间': datetime64,
@@ -30,7 +30,7 @@ class Warehouse:
                         '存货编码': float, '入库单号': str})
 
         self.MaterialInData = pd.read_excel(
-            f"{self.path}/DATA/SCM/WM/采购入库单列表-{self.ThisMonthStart}-{self.ThisMonthEnd}.XLSX",
+            f"{self.path}/DATA/SCM/WM/采购入库单列表.XLSX",
             usecols=['仓库', '入库单号', '行号'],
             converters={'入库单号': str})
 
@@ -38,14 +38,14 @@ class Warehouse:
             self.MaterialInData['仓库'].isin(WarehouseList)]
 
         self.MaterialOutData = pd.read_excel(
-            f"{self.path}/DATA/SCM/WM/材料出库单列表-{self.ThisMonthStart}-{self.ThisMonthEnd}.XLSX",
+            f"{self.path}/DATA/SCM/WM/材料出库单列表.XLSX",
             usecols=['出库单号', '材料编码', '物料描述', '行号', '仓库'],
             converters={'材料编码': str, '出库单号': str})
         self.MaterialOutData = self.MaterialOutData[
             self.MaterialOutData['仓库'].isin(WarehouseList)]
 
         self.WorkFlowData = pd.read_excel(
-            f"{self.path}/DATA/SCM/WM/工作流处理追溯-{self.ThisMonthStart}-{self.ThisMonthEnd}.XLSX",
+            f"{self.path}/DATA/SCM/WM/工作流处理追溯.XLSX",
             usecols=['单据编号', '处理人', '处理时间', '处理动作'], header=1,
             converters={'单据编号': str, '处理时间': datetime64, '处理动作': str})
         self.WorkFlowList = []

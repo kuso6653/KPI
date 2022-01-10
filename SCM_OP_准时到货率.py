@@ -16,11 +16,11 @@ class ArriveTime:
         self.LastMonthStart = str(self.LastMonthStart).split(" ")[0].replace("-", "")
         self.LastMonthEnd = str(self.LastMonthEnd).split(" ")[0].replace("-", "")
         self.PurchaseInData = pd.read_excel(
-            f"{self.path}/DATA/SCM/OP/采购订单列表-{self.LastMonthStart}-{self.ThisMonthEnd}.XLSX",
+            f"{self.path}/DATA/SCM/OP/采购订单列表.XLSX",
             usecols=['订单编号', '行号', '实际到货日期'],
             converters={'行号': int, '实际到货日期': datetime64})
         self.Prescription = pd.read_excel(
-            f"{self.path}/DATA/SCM/采购时效性统计表-{self.LastMonthStart}-{self.ThisMonthEnd}.XLSX",
+            f"{self.path}/DATA/SCM/采购时效性统计表.XLSX",
             usecols=[0, 1, 6, 7, 9, 11, 12, 14, 15, 16], header=2,
             names=["行号", "采购订单号", "存货编码", "存货名称", "计划到货日期", "采购订单制单时间", "采购订单审核时间",
                    "到货单号", "到货单行号", "到货单制单时间"],

@@ -25,10 +25,10 @@ class Deliver:
         self.func.mkdir(path)
 
     def GetDeliver(self):
-        SaleOutData = pd.read_excel(f"{self.path}/DATA/SCM/LOGISTIC/销售出库单列表-{self.ThisMonthStart}-{self.ThisMonthEnd}.XLSX",
+        SaleOutData = pd.read_excel(f"{self.path}/DATA/SCM/LOGISTIC/销售出库单列表.XLSX",
                                     usecols=['发货单号', '审核时间', '存货编码'],
                                     converters={'发货单号': str, '存货编码': str, '审核时间': datetime64})
-        InvoiceData = pd.read_excel(f"{self.path}/DATA/SCM/LOGISTIC/发货单列表-{self.ThisMonthStart}-{self.ThisMonthEnd}.XLSX",
+        InvoiceData = pd.read_excel(f"{self.path}/DATA/SCM/LOGISTIC/发货单列表.XLSX",
                                     usecols=['发货单号', '审核时间', '存货编码'],
                                     converters={'发货单号': str, '存货编码': str,'审核时间': datetime64})
 
