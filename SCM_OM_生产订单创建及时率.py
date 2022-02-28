@@ -54,7 +54,7 @@ class OrderCreation:
         self.ProductionData['制单时间'] = self.ProductionData['制单时间'].astype(datetime64)
         self.ProductionData = self.ProductionData.dropna(subset=['生产批号'])  # 去除nan的列
         self.ProductionData['生产批号'] = self.ProductionData['生产批号'].str[:5]  # 截取前五位
-        self.Material_data = pd.read_excel(f"{self.path}/DATA/SCM/存货档案2022-02-01.XLSX",
+        self.Material_data = pd.read_excel(f"{self.path}/DATA/SCM/存货档案2022-02-28.XLSX",
                                            usecols=['存货编码', '计划默认属性', '启用日期'],
                                            converters={'启用日期': datetime64, "存货编码": str})
 
@@ -94,17 +94,21 @@ class OrderCreation:
         self.BOM_data["集成时间"] = self.BOM_data["集成时间"].astype("datetime64")
 
     def GetNewMaterial(self):  # 获取新物料
+        self.mkdir(self.path + "/RESULT/SCM/OM")
         NewMaterialData = self.ThisMonthData[self.ThisMonthData["启用日期"].notnull()]  # 新物料
         NewProductionData = pd.merge(NewMaterialData, self.Routing_data, on=["物料编码"], how="left")
         NewProductionData = NewProductionData.dropna(subset=["版本日期"])  # 去nan
         NewProductionData['下单延时/H'] = (
-                (NewProductionData['制单时间'] - NewProductionData['版本日期']) / pd.Timedelta(1, 'H')).astype(
-            int)
-        NewProductionData.loc[NewProductionData["下单延时/H"] > 72, "创建及时率"] = "超时"  # 计算出来的审批延时大于3天为超时
-        NewProductionData.loc[NewProductionData["下单延时/H"] <= 72, "创建及时率"] = "正常"  # 小于等于3天为正常
-        # 输出新物料及时率
-        self.mkdir(self.path + "/RESULT/SCM/OM")
-        NewProductionData.to_excel(f'{self.path}/RESULT/SCM/OM/生产订单创建及时率.xlsx', sheet_name="新物料", index=False)
+                    (NewProductionData['制单时间'] - NewProductionData['版本日期']) / pd.Timedelta(1, 'H')).astype(int)
+        try:
+            NewProductionData.loc[NewProductionData["下单延时/H"] > 72, "创建及时率"] = "超时"  # 计算出来的审批延时大于3天为超时
+            NewProductionData.loc[NewProductionData["下单延时/H"] <= 72, "创建及时率"] = "正常"  # 小于等于3天为正常
+            # 输出新物料及时率
+            NewProductionData.to_excel(f'{self.path}/RESULT/SCM/OM/生产订单创建及时率.xlsx', sheet_name="新物料", index=False)
+
+        except:
+            df = pd.DataFrame()
+            df.to_excel(f'{self.path}/RESULT/SCM/OM/生产订单创建及时率.xlsx', sheet_name="新物料", index=False)
 
     def GetOldMaterial(self):  # 获取旧物料
 

@@ -59,6 +59,7 @@ class ProcessDispatch:
                     flag = flag + 1
                     continue
                 except:
+                    flag = flag + 1
                     continue
             else:
                 try:

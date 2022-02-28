@@ -17,7 +17,7 @@ class SelfMaterial:
     def ContrastData(self, BaseData, NewData):
         BaseData = BaseData.dropna(subset=['存货编码'])  # 去除nan的列
         NewData = NewData.dropna(subset=['存货编码'])  # 去除nan的列
-        out_data = pd.merge(BaseData.drop(labels=['生产部门名称', '变动提前期', '变动基数', '固定提前期', '计划默认属性', '启用日期', '停用日期', '无需采购件'], axis=1),
+        out_data = pd.merge(BaseData.drop(labels=['生产部门名称', '变动提前期', '变动基数', '固定提前期', '计划默认属性', '启用日期', '停用日期', '无需采购件', '计划方法'], axis=1),
                             NewData,
                             on=['存货编码', '存货名称'])
         out_data = out_data[out_data.isnull().any(axis=1)]
@@ -64,6 +64,7 @@ class SelfMaterial:
                     flag = flag + 1
                     continue
                 except:
+                    flag = flag + 1
                     continue
             else:
                 try:

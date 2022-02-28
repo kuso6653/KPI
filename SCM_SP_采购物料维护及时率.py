@@ -24,7 +24,7 @@ class MaterialMaintenance:
     def CheckDataStock(self, BaseData, NewData):
         BaseData = BaseData.dropna(subset=['存货编码'])  # 去除nan的列
         NewData = NewData.dropna(subset=['存货编码'])  # 去除nan的列
-        out_data = pd.merge(BaseData.drop(labels=['主要供货单位名称', '最低供应量', '采购员名称', '固定提前期', '计划默认属性', '启用日期', '停用日期', '无需采购件'], axis=1),
+        out_data = pd.merge(BaseData.drop(labels=['主要供货单位名称', '最低供应量', '采购员名称', '固定提前期', '计划默认属性', '启用日期', '停用日期', '无需采购件', '计划方法'], axis=1),
                             NewData,
                             on=['存货编码', '存货名称'])
         out_data = out_data[out_data.isnull().any(axis=1)]
@@ -69,6 +69,7 @@ class MaterialMaintenance:
                     flag = flag + 1
                     continue
                 except:
+                    flag = flag + 1
                     continue
             else:
                 try:
