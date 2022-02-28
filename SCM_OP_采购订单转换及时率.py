@@ -77,6 +77,7 @@ class OrderConversion:
                     flag = flag + 1
                     continue
                 except:
+                    flag = flag + 1
                     continue
             else:
                 try:

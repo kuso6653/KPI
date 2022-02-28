@@ -93,7 +93,7 @@ class SalesOrder:
 
             if len(code[0]) == 0:  # 单号为空
                 continue
-            elif int(code[0][:6]) <= 202109:
+            elif int(code[0][:6]) <= 202110:
                 return True
             try:
                 wander_html = self.driver.find_element_by_xpath('//*[@id="DFlow_MindList"]').get_attribute("outerHTML")
