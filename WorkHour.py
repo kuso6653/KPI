@@ -80,12 +80,12 @@ class WorkHour:
                                             converters={'生产订单号': str, '行号': str, '物料编码': str, '工艺路线版本号': int})  # '制单时间': # datetime64,  '生产批号': str,
         self.ProductionData = self.ProductionData.rename(columns={'生产订单号': '生产订单', '工艺路线版本号': '版本代号'})  #
 
-        self.Routing_data = pd.read_excel(f"{self.path}/DATA/WORKHOUR/工艺路线资料表--含资源.xlsx",
+        self.Routing_data = pd.read_excel(f"{self.path}/DATA/SCM/OM/工艺路线资料表--含资源.xlsx",
                                           header=3, usecols=["物料编码", "工作中心", "工作中心名称", "版本日期", "版本代号", "资源名称",
                                                              "版本说明", "工时(分子)", "工序行号", "工序代号"],
                                           converters={'物料编码': str, "工时(分子)": int, "版本代号": int, "工序行号": str})
 
-        self.WorkHourData = pd.read_excel(f"{self.path}/DATA/WORKHOUR/报工列表.xlsx",
+        self.WorkHourData = pd.read_excel(f"{self.path}/DATA/PROD/报工列表.xlsx",
                                           usecols=["单据日期", "单据号码", "制单人", "表头备注", "生产批号", "生产订单", "行号",
                                                    "物料编码", "物料名称", "生产数量", "资源工时1", "资源名称1",
                                                    "资源工时2", "资源名称2", "移入工序行号", "移入标准工序", "移入工序说明", "合格数量",
