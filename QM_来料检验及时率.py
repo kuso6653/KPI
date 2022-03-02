@@ -1,6 +1,6 @@
 import pandas as pd
 from numpy import datetime64
-
+from openpyxl import load_workbook
 import Func
 
 
@@ -24,15 +24,24 @@ class MaterialInspection:
                                        converters={'订单制单时间': datetime64, '报检审核时间': datetime64, '检验审核时间': datetime64,
                                                    '入库制单时间': datetime64, '存货编码': float, "订单号": str})
         PurchaseInData = PurchaseInData.dropna(subset=['报检审核时间'])  # 去除nan的列
+        ApproveData = PurchaseInData[PurchaseInData['检验审核时间'].isnull()]  # 筛选出已报检未检验的数据 （报检审核时间有，检验审核时间有）
+        ApproveData['单据状态'] = '超时'  # 已报检未检验的数据默认为 超时
+        PurchaseInData = PurchaseInData.dropna(subset=['检验审核时间'])  # 去除nan的列
         PurchaseInData['审批延时'] = ((PurchaseInData['检验审核时间'] - PurchaseInData['报检审核时间']) / pd.Timedelta(1, 'H')).astype(
             int)
         PurchaseInData.loc[PurchaseInData["审批延时"] > 24, "单据状态"] = "超时"  # 计算出来的质检的审批延时大于24为超时
         PurchaseInData.loc[PurchaseInData["审批延时"] <= 24, "单据状态"] = "正常"  # 小于等于24为正常
-        self.SaveFile(PurchaseInData)
+        self.SaveFile(PurchaseInData, ApproveData)
 
-    def SaveFile(self, PurchaseInData):
+    def SaveFile(self, PurchaseInData, ApproveData):
         self.mkdir(self.path + "/RESULT/QM")
         PurchaseInData.to_excel(f'{self.path}/RESULT/QM/来料检验及时率.xlsx', sheet_name="来料检验及时率", index=False)
+
+        book = load_workbook(f'{self.path}/RESULT/QM/来料检验及时率.xlsx')
+        writer = pd.ExcelWriter(f"{self.path}/RESULT/QM/来料检验及时率.xlsx", engine='openpyxl')
+        writer.book = book
+        ApproveData.to_excel(writer, "已报检未检验数据", index=False)
+        writer.save()
 
     def run(self):
         self.GetPurchaseIn()
