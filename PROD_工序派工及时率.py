@@ -19,7 +19,7 @@ class ProcessDispatch:
     def CheckDataWork(self, base_data, new_data):
         base_data = base_data.dropna(subset=['物料编码'])  # 去除nan的列
         new_data = new_data.dropna(subset=['物料编码'])  # 去除nan的列
-        out_data = pd.merge(base_data.drop(labels=['派工标识'], axis=1), new_data, on=['物料编码', '生产订单', '工序行号', '行号'])
+        out_data = pd.merge(base_data.drop(labels=['派工标识'], axis=1), new_data, on=['物料编码', '生产订单', '工序行号', '行号', '物料名称'])
         out_data = out_data.loc[out_data['派工标识'] != "*"]
         self.AllDataList.append(out_data)
 
@@ -52,7 +52,7 @@ class ProcessDispatch:
             if flag < 3:
                 try:
                     BaseData = pd.read_excel(f"{self.path}/DATA/PROD/工序派工资料维护{ThisYear}-{LastMonth}-{work_day}.XLSX",
-                                             usecols=['物料编码', '生产订单', '工序行号', '派工标识', '行号'],
+                                             usecols=['物料编码', '生产订单', '工序行号', '派工标识', '行号', '物料名称'],
                                              converters={'物料编码': int, '工序行号': int}
                                              )
                     self.BaseDataList.append(BaseData)
@@ -64,7 +64,7 @@ class ProcessDispatch:
             else:
                 try:
                     NewData = pd.read_excel(f"{self.path}/DATA/PROD/工序派工资料维护{ThisYear}-{ThisMonth}-{work_day}.XLSX",
-                                            usecols=['物料编码', '生产订单', '工序行号', '派工标识', '行号'],
+                                            usecols=['物料编码', '生产订单', '工序行号', '派工标识', '行号', '物料名称'],
                                             converters={'物料编码': int, '工序行号': int}
                                             )
                 except:

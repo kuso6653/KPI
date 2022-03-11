@@ -149,7 +149,7 @@ class PurchaseConversion:
     def save_data(self):
         path = f"{self.path}/RESULT/SCM/OP"
         self.mkdir(path)
-        file_path = path + '/' + '采购申请及时率' + '.xlsx'
+        file_path = path + '/' + '非生产性物料转换及时率' + '.xlsx'
         self.merge_data.to_excel(file_path, index=False)
         print("success")
 
