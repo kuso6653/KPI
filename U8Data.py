@@ -44,8 +44,10 @@ class U8Data:
 
     def MRPFunc(self):
         CountSql1, CountSql2, MRPDataSql = self.func.ReturnMRPSql()
-        MRPDataData = self.U8ms.ExecQuery(MRPDataSql)  # 查询获取U8数据库数据
-        print(MRPDataData)
+        MRPDataData1 = self.U8ms.ExecQuery(CountSql1)  # 查询获取U8数据库数据
+        MRPDataData2 = self.U8ms.ExecQuery(CountSql2)  # 查询获取U8数据库数据
+        MRPDataData3 = self.U8ms.ExecQuery(MRPDataSql)  # 查询获取U8数据库数据
+
 
     def run(self):
         # self.InventoryFunc()
