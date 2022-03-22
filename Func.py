@@ -201,6 +201,95 @@ def ReturnMRPSql():  # 返回U8数据库查询SQL 的count 和具体的查询数
         and ( n.SupplyType In (0,1,2,3,7))  Order by n.PlanCode  Select Count(SortNo) From ##NetDemandPagesData132895399245185579_5d47b5994d584bb8a6249248256aaac1
     """
     MRPDataSql = """
+
+
+/******MRP计划维护(新加)**********/
+ALTER procedure [dbo].[Usp_MP_MP04005_data]
+	@v_StartId int,
+	@v_EndId int,
+	@v_TableName nvarchar(200)
+
+as
+
+	declare @l_s nvarchar(500), @l_projectid int
+	
+	create table #tmp_data(SortNo int, TargetId int, DemandId int, PlanCode nvarchar(30),Projectid int)
+		
+	select @l_s = 'insert into #tmp_data select t.SortNo, t.TargetId, DemandId = n.CopyDemandId, PlanCode = n.PlanCode,n.ProjectId
+	  from ' + @v_tablename + ' t inner join mps_netdemand n on t.TargetId = n.DemandId 
+	 where n.DelFlag = 0 and t.SortNo between ' + convert(nvarchar(20),@v_StartId) + ' and ' + convert(nvarchar(20),@v_EndId )
+		
+	exec sp_executesql @l_s
+	
+	select @l_projectid = Projectid from #tmp_data
+
+	select d.SortNo,d.TargetId, OrderType = DemandId,PlanCode = PlanCode, OrderCode = @l_s,
+			 CustCode = @l_s,CustName = @l_s,
+			 SoInvCode = @l_s,SoInvName = @l_s, SoInvSpec = @l_s
+	  into #tmp_id
+	  from #tmp_data d where 1 = 2
+	  
+    create index #tmp_id1 on #tmp_id(TargetId,SortNo)
     
+	exec Usp_MP_GetNetdemandReleaseOrder
+	
+	update #tmp_id
+	set CustCode = isnull(s.cCusCode,e.cCusCode),
+		 SoInvCode = isnull(s1.cInvCode,e1.cInvCode)
+  from #tmp_id t 
+		 inner join mps_netdemand n on t.TargetId = n.DemandId
+		 left outer join so_somain s on n.SoType in (1,5) and n.SoCode = s.cSoCode
+		 left outer join ex_order e on n.SoType in (3,6) and n.SoCode = e.cCode
+		 left outer join so_sodetails s1 on n.SoType = 1 and n.SoDId = convert(nvarchar(10),s1.isosid)
+		 left outer join ex_orderdetail e1 on n.SoType = 3 and n.SoDId = convert(nvarchar(10),e1.autoid)
+	where n.SoType in (1,3,5,6) 
+ 
+ 	update #tmp_id set CustName = c.cCusName,SoInvName = i.cInvName, SoInvSpec = i.cInvStd
+	  from #tmp_id t inner join customer c on t.CustCode = c.cCusCode
+	  			 left join inventory i on i.cInvCode = t.SoInvCode
+	  			 
+	
+	select distinct n.FactoryCode,n.PartId,p.InvCode,p.MinQty,p.MulQty,p.FixQty,p.SafeQty into #t_factorypart
+	  from #tmp_id dlf inner join mps_netdemand n on n.DemandId = dlf.TargetId
+			 inner join bas_part p on n.PartId = p.PartId
+			 
+	if dbo.MultiFactoryEnable() = 1
+		update #t_factorypart
+			set MinQty = p.MinQty, MulQty = p.MulQty,FixQty = p.FixQty, SafeQty = p.SafeQty
+		  from #t_factorypart f inner join bas_factorypart p on f.InvCode = p.InvCode and f.FactoryCode = p.FactoryCode
+	
+	update #t_factorypart
+	   set SafeQty = s.DocQty * -1
+	  from #t_factorypart fp inner join mps_schedule s on s.ProjectId = @l_projectId and fp.PartId = s.PartID and docType = 22 
+	
+	Select n.DemandId,n.PartId,coalesce(n.SoType,0) As SoType,coalesce(n.SoDId,'') As SoDId,
+			 coalesce(n.SoId,0) As SoId,n.SoCode,n.SoSeq,n.DemandCode,rc.cRClassName As DemandCodeDesc,
+			 n.PlanCode,n.DueDate,n.StartDate,n.LUSD,n.LUCD,n.PlanQty,n.CrdQty,n.SupplyType,n.SchId,n.Ufts,
+			 n.ProcQty, n.ManualFlag,n.DelFlag,n.ModifyFlag,n.ProjectId,n.FirmDate,n.FirmUser,n.Status,
+			 n.SrpSoDId,n.SrpSoType,convert(decimal(22,6),null) As OnHand,convert(decimal(22,6),null) AS OnOrder,
+			 convert(decimal(22,6),null) As OnAllocate,n.SupplyingRCode,n.SupplyingPCode, n.Define22, n.Define23, 
+			 n.Define24, n.Define25, n.Define26 , n.Define27, n.Define28, n.Define29, n.Define30, n.Define31, n.Define32,
+			 n.Define33, n.Define34, n.Define35, n.Define36 , n.Define37,CONVERT(CHAR,Convert(MONEY,n.Ufts),2) as MpsUfts,
+			 i.bATOModel as IsAto,n.CopyDemandId,nbak.PlanQty As OriginalPlanQty, 
+			 v.InvCCode,v.InvCode,v.InvAddCode,v.InvName,v.InvStd,v.ComUnitCode As InvUnit,v.ComUnitName As InvUnitName,v.IsRem,v.Policy As Police,v.DemandMergeType As TrackStyle, 
+			 p.Free1 As InvFree_1,p.Free2 As InvFree_2,p.Free3 As InvFree_3,p.Free4 As InvFree_4,p.Free5 As InvFree_5, p.Free6 As InvFree_6,p.Free7 As InvFree_7,p.Free8 As InvFree_8,p.Free9 As InvFree_9,p.Free10 As InvFree_10,
+			 fp.MinQty,fp.MulQty,fp.FixQty,fp.SafeQty, i.cInvPersonCode As EmplCode,psi.cPersonName As EmplName,n.PurEmplCode As OrgPurEmplCode,coalesce(n.PurEmplCode,i.cPurPersonCode) As PurEmplCode,psp.cPersonName As PurEmplName, 
+			 v.InvDefine1 As InvDefine_1,v.InvDefine2 As InvDefine_2,v.InvDefine3 As InvDefine_3,v.InvDefine4 As InvDefine_4,v.InvDefine5 As InvDefine_5, v.InvDefine6 As InvDefine_6,v.InvDefine7 As InvDefine_7,v.InvDefine8 As InvDefine_8,
+			 v.InvDefine9 As InvDefine_9,v.InvDefine10 As InvDefine_10, v.InvDefine11 As InvDefine_11,v.InvDefine12 As InvDefine_12,v.InvDefine13 As InvDefine_13,v.InvDefine14 As InvDefine_14,v.InvDefine15 As InvDefine_15,v.InvDefine16 As InvDefine_16, 
+			 p.cBasEngineerFigNo as BasEngineerFigNo,i.cPlanMethod as PlanMethod ,dlf.OrderType as RelType,dlf.OrderCode as RelCode,dlf.CustCode,dlf.CustName,dlf.SoInvCode,dlf.SoInvName,dlf.SoInvSpec,n.CloseUser As CloseUser,n.CloseDate,n.CloseTime,
+			 n.FactoryCode,f.cFactoryName
+	  from mps_netdemand n inner join bas_part p on n.PartId = p.PartId inner join #t_factorypart fp on fp.FactoryCode = n.FactoryCode and p.PartId = fp.PartId
+			 Left Outer join mps_planproject j on n.ProjectId=j.ProjectId 
+			 Left Outer join v_bas_inventory v on p.InvCode = v.InvCode 
+			 Left Outer join Inventory i on v.InvCode=i.cInvCode 
+			 Left Outer join mps_plancode c on j.PlanCodeId=c.PlanCodeId 
+			 Left Outer join mps_netdemandbak nbak on n.DemandId=nbak.DemandId 
+			 Left Outer join AA_RequirementClass rc on rc.cRClassCode=n.DemandCode 
+			 left outer join person psp on coalesce(n.PurEmplCode,i.cPurPersonCode)=psp.cPersonCode 
+			 left outer join person psi on i.cInvPersonCode=psi.cPersonCode 
+			 inner join #tmp_id dlf on n.DemandId = dlf.TargetId 
+			 left outer join Factory f on n.FactoryCode = f.cFactoryCode
+	 Order by dlf.SortNo;
+
 exec sp_executesql N'exec Usp_MP_MP04005_data @StartNo, @EndNo,##NetDemandPagesData132895399245185579_5d47b5994d584bb8a6249248256aaac1',N'@StartNo int,@EndNo int',@StartNo=1,@EndNo=1921"""
     return CountSql1, CountSql2, MRPDataSql
