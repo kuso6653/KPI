@@ -106,8 +106,9 @@ class OrderConversion:
         df = pd.merge(
             self.MRPData.drop(labels=['物料名称', '物料属性', '是否客供料'],
                               axis=1), self.YesMRPData, on=['物料编码', '需求跟踪号', '需求跟踪行号', '开工日期'])
-        df = df.loc[df["需求跟踪号"] == "XS20211223001"]
         df2 = df.loc[df["需求跟踪号"] != "XS20211223001"]
+        df = df.loc[df["需求跟踪号"] == "XS20211223001"]
+
         self.ADDSheet(df, '挤出项目未转换MRP清单')
         self.ADDSheet(df2, '三天内未转化MRP清单')
     def run(self):
