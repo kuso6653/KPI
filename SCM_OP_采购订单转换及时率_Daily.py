@@ -27,6 +27,8 @@ class OrderConversion:
                                                 usecols=['物料编码', '物料名称', '需求跟踪号', '需求跟踪行号', '物料属性', '是否客供料', '开工日期', '采购员名称'],
                                                 converters={'物料编码': int, '需求跟踪行号': int, '开工日期': str}
                                                 )
+                self.YesMRPData = self.YesMRPData.rename(columns={'采购员名称': '默认采购员'})
+
                 break
             except Exception as e:
                 print(e)
@@ -35,6 +37,7 @@ class OrderConversion:
                                      usecols=['物料编码', '物料名称', '需求跟踪号', '需求跟踪行号', '物料属性', '是否客供料', '开工日期', '采购员名称'],
                                      converters={'物料编码': int, '需求跟踪行号': int, '开工日期': str}
                                      )
+        self.MRPData = self.MRPData.rename(columns={'采购员名称': '默认采购员'})
         self.ThisMonthStart = str(self.ThisMonthStart).split(" ")[0]
         self.LastMonthStart = str(self.LastMonthStart).split(" ")[0]
         self.ThisMonthEnd = str(self.ThisMonthEnd).split(" ")[0]
@@ -49,16 +52,16 @@ class OrderConversion:
         self.PRProcessData = pd.read_excel(f"{self.path}/DATA/SCM/OP/请购执行进度表.XLSX",
                                            usecols=[1, 6, 7, 8, 9, 10, 14, 15, 20, 23], header=4,
                                            names=["请购单号", "请购单行号", "存货编码", "存货名称", "规格型号", "数量", "采购订单号", "采购订单行号",
-                                                  "计划到货日期", "采购员"],
+                                                  "计划到货日期", "采购订单制单人"],
                                            converters={'请购单号': str, '请购单行号': str, '存货编码': str, '数量': float,
                                                        '采购订单号': str, '采购订单行号': str, '计划到货日期': datetime64})
 
         self.PRData = pd.read_excel(f"{self.path}/DATA/SCM/OP/请购单列表.XLSX",
                                     usecols=['单据号', '行号', '行关闭人', '建议订货日期', '审核时间', '制单时间', '存货编码', '存货名称', '规格型号',
-                                             '数量'],
+                                             '数量', '执行采购员'],
                                     converters={'单据号': str, '行号': str, '审核时间': datetime64, '制单时间': datetime64,
                                                 '建议订货日期': datetime64, '存货编码': str, '数量': float})
-        self.PRData = self.PRData.rename(columns={'行号': '请购单行号', '单据号': '请购单号', '制单时间': '请购单制单时间', '审核时间': '请购单审核时间'})
+        self.PRData = self.PRData.rename(columns={'行号': '请购单行号', '单据号': '请购单号', '制单时间': '请购单制单时间', '审核时间': '请购单审核时间', '执行采购员': '默认采购员'})
 
         self.PRData = self.PRData.loc[self.PRData["行关闭人"].isnull()]  # 筛选 行关闭人 为空的行
         self.PRApproveNotTime = self.PRData.loc[self.PRData["请购单审核时间"].isnull()]  # 筛选 审核时间 为空的行
@@ -104,7 +107,7 @@ class OrderConversion:
         self.MRPData = self.MRPData.loc[self.MRPData["物料属性"] == "采购"]
         self.MRPData = self.MRPData.loc[self.MRPData["是否客供料"].isnull()]
         df = pd.merge(
-            self.MRPData.drop(labels=['物料名称', '物料属性', '是否客供料', '采购员名称'],
+            self.MRPData.drop(labels=['物料名称', '物料属性', '是否客供料', '默认采购员'],
                               axis=1), self.YesMRPData, on=['物料编码', '需求跟踪号', '需求跟踪行号', '开工日期'])
         df2 = df.loc[df["需求跟踪号"] != "XS20211223001"]
         df = df.loc[df["需求跟踪号"] == "XS20211223001"]
