@@ -24,7 +24,7 @@ class OrderConversion:
         while 1:  # 获取前三天MRP数据，没有则继续往前推一天，直到有为止
             try:
                 self.YesMRPData = pd.read_excel(f"{self.path}/DATA/SCM/OP/MRP计划维护--全部{str(yesterday)[:10]}.XLSX",
-                                                usecols=['物料编码', '物料名称', '需求跟踪号', '需求跟踪行号', '物料属性', '是否客供料', '开工日期'],
+                                                usecols=['物料编码', '物料名称', '需求跟踪号', '需求跟踪行号', '物料属性', '是否客供料', '开工日期', '采购员名称'],
                                                 converters={'物料编码': int, '需求跟踪行号': int, '开工日期': str}
                                                 )
                 break
@@ -32,7 +32,7 @@ class OrderConversion:
                 print(e)
                 yesterday = yesterday + timedelta(days=-1)
         self.MRPData = pd.read_excel(f"{self.path}/DATA/SCM/OP/MRP计划维护--全部{str(self.today)[:10]}.XLSX",
-                                     usecols=['物料编码', '物料名称', '需求跟踪号', '需求跟踪行号', '物料属性', '是否客供料', '开工日期'],
+                                     usecols=['物料编码', '物料名称', '需求跟踪号', '需求跟踪行号', '物料属性', '是否客供料', '开工日期', '采购员名称'],
                                      converters={'物料编码': int, '需求跟踪行号': int, '开工日期': str}
                                      )
         self.ThisMonthStart = str(self.ThisMonthStart).split(" ")[0]
@@ -87,15 +87,15 @@ class OrderConversion:
         df4 = Approve.loc[Approve["采购订单号"].isnull()]  # 筛选 采购订单号 为空的值
 
         df3['转化延时'] = ((df3['采购订单制单时间'] - df3['请购单审核时间']) / pd.Timedelta(1, 'H')).astype(int)
-        df3.loc[df3["转化延时"] > 48, "单据状态"] = "超时"
-        df3.loc[df3["转化延时"] <= 48, "单据状态"] = "正常"
+        # df3.loc[df3["转化延时"] > 48, "单据状态"] = "超时"
+        # df3.loc[df3["转化延时"] <= 48, "单据状态"] = "正常"
 
         df4 = df4.loc[df4['建议订货日期'] < datetime64(str(self.today)[:10])]
 
-        df3.to_excel(f'{self.path}/RESULT/SCM/OP/采购订单转换及时率.xlsx', sheet_name="三天内未及时转化请购单", index=False)
-        self.ADDSheet(df4, '历史未转化请购单')
-        self.ADDSheet(self.PRApproveNotTime, '历史未审核请购单')
-        self.ADDSheet(ApproveNotTime, '未完成采购并且已被关闭请购单')
+        df3.to_excel(f'{self.path}/RESULT/SCM/OP/采购订单转换及时率.xlsx', sheet_name="二月份至今的请购单列表", index=False)
+        self.ADDSheet(df4, '二月份至今的未转化请购单')
+        self.ADDSheet(self.PRApproveNotTime, '二月份至今的未审核请购单')
+        self.ADDSheet(ApproveNotTime, '二月份至今未完成采购并且已被关闭请购单')
 
     def GetOrderConversion(self):  # 三天未转化MRP
         self.YesMRPData = self.YesMRPData.loc[self.YesMRPData["物料属性"] == "采购"]
@@ -104,7 +104,7 @@ class OrderConversion:
         self.MRPData = self.MRPData.loc[self.MRPData["物料属性"] == "采购"]
         self.MRPData = self.MRPData.loc[self.MRPData["是否客供料"].isnull()]
         df = pd.merge(
-            self.MRPData.drop(labels=['物料名称', '物料属性', '是否客供料'],
+            self.MRPData.drop(labels=['物料名称', '物料属性', '是否客供料', '采购员名称'],
                               axis=1), self.YesMRPData, on=['物料编码', '需求跟踪号', '需求跟踪行号', '开工日期'])
         df2 = df.loc[df["需求跟踪号"] != "XS20211223001"]
         df = df.loc[df["需求跟踪号"] == "XS20211223001"]
