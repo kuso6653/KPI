@@ -74,8 +74,8 @@ class OrderConversion:
         self.func.mkdir(path)
 
     def ADDSheet(self, df, name):
-        book = load_workbook(f'{self.path}/RESULT/SCM/OP/采购订单转换及时率.xlsx')
-        writer = pd.ExcelWriter(f"{self.path}/RESULT/SCM/OP/采购订单转换及时率.xlsx", engine='openpyxl')
+        book = load_workbook(f'{self.path}/RESULT/SCM/OP/采购订单转换及时率{str(self.today)[:10]}.xlsx')
+        writer = pd.ExcelWriter(f"{self.path}/RESULT/SCM/OP/采购订单转换及时率{str(self.today)[:10]}.xlsx", engine='openpyxl')
         writer.book = book
         df.to_excel(writer, f"{name}", index=False)
         writer.save()
@@ -95,7 +95,7 @@ class OrderConversion:
 
         df4 = df4.loc[df4['建议订货日期'] < datetime64(str(self.today)[:10])]
 
-        df3.to_excel(f'{self.path}/RESULT/SCM/OP/采购订单转换及时率.xlsx', sheet_name="二月份至今的请购单列表", index=False)
+        df3.to_excel(f'{self.path}/RESULT/SCM/OP/采购订单转换及时率{str(self.today)[:10]}.xlsx', sheet_name="二月份至今的请购单列表", index=False)
         self.ADDSheet(df4, '二月份至今的未转化请购单')
         self.ADDSheet(self.PRApproveNotTime, '二月份至今的未审核请购单')
         self.ADDSheet(ApproveNotTime, '二月份至今未完成采购并且已被关闭请购单')
