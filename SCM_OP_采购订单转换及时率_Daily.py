@@ -65,12 +65,15 @@ class OrderConversion:
         self.POData = self.POData.rename(columns={'行号': '采购订单行号', '订单编号': '采购订单号', '制单时间': '采购订单制单时间'})
 
         self.PRProcessData = pd.read_excel(f"{self.path}/DATA/SCM/OP/请购执行进度表.XLSX",
-                                           usecols=[1, 6, 7, 8, 9, 10, 14, 15, 20, 23], header=4,
+                                           usecols=[1, 6, 7, 8, 9, 10, 14, 15, 16, 20, 23], header=4,
                                            names=["请购单号", "请购单行号", "存货编码", "存货名称", "规格型号", "数量", "采购订单号", "采购订单行号",
-                                                  "计划到货日期", "采购订单制单人"],
+                                                  "订单日期", "计划到货日期", "采购订单制单人"],
                                            converters={'请购单号': str, '请购单行号': str, '存货编码': str, '数量': float,
-                                                       '采购订单号': str, '采购订单行号': str, '计划到货日期': datetime64})
+                                                       '采购订单号': str, '采购订单行号': str, '计划到货日期': datetime64, '订单日期': datetime64})
 
+        self.PRProcessData = self.PRProcessData.loc[  # 筛选 订单日期 小于 本月底 的行
+            self.PRProcessData['订单日期'] <= datetime64(str(self.ThisMonthEnd)[:10])]
+        # self.PRProcessData.to_excel(f'./demo.xlsx', index=False)
         self.PRData = pd.read_excel(f"{self.path}/DATA/SCM/OP/请购单列表.XLSX",
                                     usecols=['单据号', '行号', '行关闭人', '建议订货日期', '审核时间', '制单时间', '存货编码', '存货名称', '规格型号',
                                              '数量', '执行采购员'],
@@ -80,6 +83,7 @@ class OrderConversion:
             columns={'行号': '请购单行号', '单据号': '请购单号', '制单时间': '请购单制单时间', '审核时间': '请购单审核时间', '执行采购员': '默认采购员'})
 
         self.PRData = self.PRData.loc[self.PRData["行关闭人"].isnull()]  # 筛选 行关闭人 为空的行
+
         self.PRApproveNotTime = self.PRData.loc[self.PRData["请购单审核时间"].isnull()]  # 筛选 审核时间 为空的行
         self.PRApproveNotTime = self.PRApproveNotTime.loc[  # 筛选 建议订货日期 小于 当天 的行
             self.PRApproveNotTime['建议订货日期'] < datetime64(str(self.today)[:10])]
@@ -103,7 +107,7 @@ class OrderConversion:
         ApproveNotTime = df2.loc[df2["请购单审核时间"].isnull()]  # 筛选 请购单审核时间 为空的值
         df3 = Approve.loc[Approve["采购订单号"].notnull()]  # 筛选 采购订单号 不为空的值
         df4 = Approve.loc[Approve["采购订单号"].isnull()]  # 筛选 采购订单号 为空的值
-
+        # df3.to_excel(f'./demo.xlsx', index=False)
         df3['转化延时'] = ((df3['采购订单制单时间'] - df3['请购单审核时间']) / pd.Timedelta(1, 'H')).astype(int)
         df4 = df4.loc[df4['建议订货日期'] < datetime64(str(self.today)[:10])]
 
