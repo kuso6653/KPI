@@ -71,9 +71,6 @@ class OrderConversion:
                                            converters={'请购单号': str, '请购单行号': str, '存货编码': str, '数量': float,
                                                        '采购订单号': str, '采购订单行号': str, '计划到货日期': datetime64, '订单日期': datetime64})
 
-        self.PRProcessData = self.PRProcessData.loc[  # 筛选 订单日期 小于 本月底 的行
-            self.PRProcessData['订单日期'] <= datetime64(str(self.ThisMonthEnd)[:10])]
-        # self.PRProcessData.to_excel(f'./demo.xlsx', index=False)
         self.PRData = pd.read_excel(f"{self.path}/DATA/SCM/OP/请购单列表.XLSX",
                                     usecols=['单据号', '行号', '行关闭人', '建议订货日期', '审核时间', '制单时间', '存货编码', '存货名称', '规格型号',
                                              '数量', '执行采购员'],
@@ -83,7 +80,6 @@ class OrderConversion:
             columns={'行号': '请购单行号', '单据号': '请购单号', '制单时间': '请购单制单时间', '审核时间': '请购单审核时间', '执行采购员': '默认采购员'})
 
         self.PRData = self.PRData.loc[self.PRData["行关闭人"].isnull()]  # 筛选 行关闭人 为空的行
-
         self.PRApproveNotTime = self.PRData.loc[self.PRData["请购单审核时间"].isnull()]  # 筛选 审核时间 为空的行
         self.PRApproveNotTime = self.PRApproveNotTime.loc[  # 筛选 建议订货日期 小于 当天 的行
             self.PRApproveNotTime['建议订货日期'] < datetime64(str(self.today)[:10])]
