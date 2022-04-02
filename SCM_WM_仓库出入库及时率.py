@@ -23,9 +23,9 @@ class Warehouse:
         self.ThisMonthEnd = str(self.ThisMonthEnd).split(" ")[0].replace("-", "")
         self.PurchaseInData = pd.read_excel(
             f"{self.path}/DATA/SCM/采购时效性统计表.XLSX",
-            usecols=[1, 6, 7, 12, 22, 26, 28, 29, 30], header=3,
-            names=["订单号", "存货编码", "存货名称", "订单制单时间", "报检审核时间", "检验审核时间", '入库单号', '行号', "入库制单时间"],
-            converters={'订单制单时间': datetime64, '报检审核时间': datetime64,
+            usecols=[1, 6, 7, 12, 23, 27, 29, 30, 31], header=2,
+            names=["订单号", "存货编码", "存货名称", "订单审核时间", "报检审核时间", "检验审核时间", '入库单号', '行号', "入库制单时间"],
+            converters={'订单审核时间': datetime64, '报检审核时间': datetime64,
                         '检验审核时间': datetime64, '入库制单时间': datetime64,
                         '存货编码': float, '入库单号': str})
 
@@ -91,7 +91,7 @@ class Warehouse:
 
     def PurchaseIn(self):  # 仓库入库及时率
         del self.PurchaseInData['订单号']
-        del self.PurchaseInData['订单制单时间']
+        del self.PurchaseInData['订单审核时间']
         del self.PurchaseInData['报检审核时间']
 
         self.PurchaseInData = self.PurchaseInData.rename(columns={'行号': '入库单行号', '仓库': '入库仓库'})

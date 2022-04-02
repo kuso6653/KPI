@@ -17,11 +17,13 @@ class ArriveTime:
         self.LastMonthEnd = str(self.LastMonthEnd).split(" ")[0].replace("-", "")
         self.PurchaseInData = pd.read_excel(
             f"{self.path}/DATA/SCM/OP/采购订单列表.XLSX",
-            usecols=['订单编号', '行号', '实际到货日期'],
+            usecols=['订单编号', '行号', '实际到货日期', '制单人'],
             converters={'行号': int, '实际到货日期': datetime64})
+        self.PurchaseInData = self.PurchaseInData.rename(columns={'制单人': '采购员'})
+
         self.Prescription = pd.read_excel(
             f"{self.path}/DATA/SCM/采购时效性统计表.XLSX",
-            usecols=[0, 1, 6, 7, 9, 11, 12, 14, 15, 16], header=2,
+            usecols=[0, 1, 6, 7, 9, 11, 12, 15, 16, 17], header=2,
             names=["行号", "采购订单号", "存货编码", "存货名称", "计划到货日期", "采购订单制单时间", "采购订单审核时间",
                    "到货单号", "到货单行号", "到货单制单时间"],
             converters={'计划到货日期': datetime64, '采购订单制单时间': datetime64, '采购订单审核时间': datetime64, '到货单制单时间': datetime64})
@@ -42,17 +44,26 @@ class ArriveTime:
         ThisMonthArriveData['实际到货日期'] = ThisMonthArriveData['实际到货日期'].fillna(ThisMonthArriveData['计划到货日期'])
         ThisMonthArriveData['实际到货日期'] = pd.to_datetime(ThisMonthArriveData['实际到货日期'].astype(str)) + pd.to_timedelta(
             '20:00:00')
+        ThisMonthArriveData['计划到货日期'] = pd.to_datetime(ThisMonthArriveData['计划到货日期'].astype(str)) + pd.to_timedelta(
+            '20:00:00')
         ThisMonthNoArriveData = ThisMonthArriveData[ThisMonthArriveData.isnull().any(axis=1)]  #
         ThisMonthArriveData = ThisMonthArriveData[ThisMonthArriveData['到货单制单时间'].notnull()]  #
-        ThisMonthArriveData["审批延时/H"] = (
+        ThisMonthArriveData["实际审批延时/H"] = (
                 (ThisMonthArriveData["到货单制单时间"] - ThisMonthArriveData["实际到货日期"]) / pd.Timedelta(1, 'H')).astype(int)
-        ThisMonthArriveData.loc[ThisMonthArriveData["审批延时/H"] > 72, "单据状态"] = "逾期"
-        ThisMonthArriveData.loc[ThisMonthArriveData["审批延时/H"] <= 72, "单据状态"] = "正常"
-        ThisMonthArriveData.loc[ThisMonthArriveData["审批延时/H"] < 0, "单据状态"] = "提前"
+        ThisMonthArriveData.loc[ThisMonthArriveData["实际审批延时/H"] > 72, "实际单据状态"] = "逾期"
+        ThisMonthArriveData.loc[ThisMonthArriveData["实际审批延时/H"] <= 72, "实际单据状态"] = "正常"
+        ThisMonthArriveData.loc[ThisMonthArriveData["实际审批延时/H"] < 0, "实际单据状态"] = "提前"
 
-        ThisMonthArriveData_Order = ['采购订单号', '采购订单行号', '存货编码', '存货名称', '计划到货日期', '实际到货日期', '采购订单制单时间', '采购订单审核时间',
-                                     '到货单号', '到货单行号', '到货单制单时间', '审批延时/H', '单据状态']
-        ThisMonthNoArriveData_Order = ['采购订单号', '采购订单行号', '存货编码', '存货名称', '计划到货日期', '实际到货日期', '采购订单制单时间', '采购订单审核时间',
+        ThisMonthArriveData["计划审批延时/H"] = (
+                (ThisMonthArriveData["到货单制单时间"] - ThisMonthArriveData["计划到货日期"]) / pd.Timedelta(1, 'H')).astype(int)
+
+        ThisMonthArriveData.loc[ThisMonthArriveData["计划审批延时/H"] > 72, "计划单据状态"] = "逾期"
+        ThisMonthArriveData.loc[ThisMonthArriveData["计划审批延时/H"] <= 72, "计划单据状态"] = "正常"
+        ThisMonthArriveData.loc[ThisMonthArriveData["计划审批延时/H"] < 0, "计划单据状态"] = "提前"
+
+        ThisMonthArriveData_Order = ['采购订单号', '采购订单行号', '存货编码', '存货名称', '采购员', '计划到货日期', '实际到货日期', '采购订单制单时间', '采购订单审核时间',
+                                     '到货单号', '到货单行号', '到货单制单时间', '实际审批延时/H', '实际单据状态', '计划审批延时/H', '计划单据状态']
+        ThisMonthNoArriveData_Order = ['采购订单号', '采购订单行号', '存货编码', '存货名称', '采购员', '计划到货日期', '实际到货日期', '采购订单制单时间', '采购订单审核时间',
                                        '到货单号', '到货单行号', '到货单制单时间']
         ThisMonthArriveData = ThisMonthArriveData[ThisMonthArriveData_Order]
         ThisMonthNoArriveData = ThisMonthNoArriveData[ThisMonthNoArriveData_Order]
@@ -72,7 +83,7 @@ class ArriveTime:
         # 当 采购订单审核时间 或 到货单制单时间 为空值的时候取其数值
         HistoryMonthArriveData = HistoryMonthArriveData[
             (HistoryMonthArriveData["采购订单审核时间"].isnull()) | (HistoryMonthArriveData["到货单制单时间"].isnull())]
-        order = ['采购订单号', '采购订单行号', '存货编码', '存货名称', '计划到货日期', '实际到货日期', '采购订单制单时间', '采购订单审核时间', '到货单号', '到货单行号',
+        order = ['采购订单号', '采购订单行号', '存货编码', '存货名称', '采购员', '计划到货日期', '实际到货日期', '采购订单制单时间', '采购订单审核时间', '到货单号', '到货单行号',
                  '到货单制单时间']
         HistoryMonthArriveData = HistoryMonthArriveData[order]
 
