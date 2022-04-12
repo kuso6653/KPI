@@ -19,9 +19,9 @@ class MaterialInspection:
 
     def GetPurchaseIn(self):
         PurchaseInData = pd.read_excel(f"{self.path}/DATA/SCM/采购时效性统计表.XLSX",
-                                       usecols=[1, 6, 7, 12, 19, 22, 26, 30], header=2,
-                                       names=["订单号", "存货编码", "存货名称", "订单制单时间", "报检单号", "报检审核时间", "检验审核时间", "入库制单时间"],
-                                       converters={'订单制单时间': datetime64, '报检审核时间': datetime64, '检验审核时间': datetime64,
+                                       usecols=[1, 6, 7, 12, 20, 23, 27, 31], header=2,
+                                       names=["订单号", "存货编码", "存货名称", "订单审核时间", "报检单号", "报检审核时间", "检验审核时间", "入库制单时间"],
+                                       converters={'订单审核时间': datetime64, '报检审核时间': datetime64, '检验审核时间': datetime64,
                                                    '入库制单时间': datetime64, '存货编码': float, "订单号": str})
         PurchaseInData = PurchaseInData.dropna(subset=['报检审核时间'])  # 去除nan的列
         ApproveData = PurchaseInData[PurchaseInData['检验审核时间'].isnull()]  # 筛选出已报检未检验的数据 （报检审核时间有，检验审核时间有）
