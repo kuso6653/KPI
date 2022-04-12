@@ -157,7 +157,7 @@ class WorkHour:
                 group = pd.merge(group, self.StandardData, on=['物料编码', '工序行号', '标准工序', '版本代号'])
                 group = self.GetWorkData(group)
                 self.Machining.append(group)
-            elif name == "吕春华" or name == "夏正棋":
+            elif name == "吕春华" or name == "夏正棋" or name == "王冬焱":
                 # Data = pd.concat(GetSumPlanData(self.Routing_data), axis=0, ignore_index=True)
                 group = pd.merge(group, self.StandardData, on=['物料编码', '工序行号', '标准工序', '版本代号'])
                 group = self.GetWorkData(group)
@@ -183,7 +183,7 @@ class WorkHour:
                 group = pd.merge(group, self.RepairData, on=['物料编码', '工序行号', '标准工序', '版本代号'])
                 group = self.GetWorkData(group)
                 self.Machining_FX.append(group)
-            elif name == "吕春华" or name == "夏正棋":
+            elif name == "吕春华" or name == "夏正棋" or name == "王冬焱":
                 group = pd.merge(group, self.RepairData, on=['物料编码', '工序行号', '标准工序', '版本代号'])
                 group = self.GetWorkData(group)
                 self.Assembly_FX.append(group)
@@ -196,16 +196,16 @@ class WorkHour:
         self.func.mkdir(path)
 
     def SaveSheet(self, data, name):  # 新建excel页签并保存数据
-        SaveBook = load_workbook(f'{self.path}/RESULT/WORKHOUR/报工工时统计.xlsx')
-        writer = pd.ExcelWriter(f"{self.path}/RESULT/WORKHOUR/报工工时统计.xlsx", engine='openpyxl')
+        SaveBook = load_workbook(f'{self.path}/RESULT/PROD/报工工时统计.xlsx')
+        writer = pd.ExcelWriter(f"{self.path}/RESULT/PROD/报工工时统计.xlsx", engine='openpyxl')
         writer.book = SaveBook
         data.to_excel(writer, f"{name}", index=False)
         writer.save()
 
     def FullSaveSheet(self, name):  # 新建空excel页签并保存数据
         data = pd.DataFrame()
-        SaveBook = load_workbook(f'{self.path}/RESULT/WORKHOUR/报工工时统计.xlsx')
-        writer = pd.ExcelWriter(f"{self.path}/RESULT/WORKHOUR/报工工时统计.xlsx", engine='openpyxl')
+        SaveBook = load_workbook(f'{self.path}/RESULT/PROD/报工工时统计.xlsx')
+        writer = pd.ExcelWriter(f"{self.path}/RESULT/PROD/报工工时统计.xlsx", engine='openpyxl')
         writer.book = SaveBook
         data.to_excel(writer, f"{name}", index=False)
         writer.save()
@@ -213,7 +213,7 @@ class WorkHour:
     def SaveFile(self):
         # self.AsNameList[0] = self.AsNameList[0][order]
 
-        self.wb.save(f'{self.path}/RESULT/WORKHOUR/报工工时统计.xlsx')
+        self.wb.save(f'{self.path}/RESULT/PROD/报工工时统计.xlsx')
         try:
             self.SaveSheet(pd.concat(self.AssemblyECC, axis=0, ignore_index=True), "总装电控")
         except:
@@ -255,16 +255,16 @@ class WorkHour:
         except:
             self.FullSaveSheet("总装PX返修")
 
-        workbook = openpyxl.load_workbook(f'{self.path}/RESULT/WORKHOUR/报工工时统计.xlsx')
+        workbook = openpyxl.load_workbook(f'{self.path}/RESULT/PROD/报工工时统计.xlsx')
         del workbook["Sheet"]
-        workbook.save(f'{self.path}/RESULT/WORKHOUR/报工工时统计.xlsx')
+        workbook.save(f'{self.path}/RESULT/PROD/报工工时统计.xlsx')
 
     def run(self):
         self.GetWorkHour()
-        self.func.mkdir(self.path + '/RESULT/WORKHOUR')
+        self.func.mkdir(self.path + '/RESULT/PROD')
         self.SaveFile()
         # del self.wb["Sheet"]
-        # self.wb.save(f'{self.path}/RESULT/WORKHOUR/报工工时统计.xlsx')
+        # self.wb.save(f'{self.path}/RESULT/PROD/报工工时统计.xlsx')
 
 
 if __name__ == '__main__':
