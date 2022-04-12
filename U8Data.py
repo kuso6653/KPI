@@ -13,9 +13,9 @@ import pandas as pd
 ####################################
 class U8Data:
     def __init__(self):
-        self.func = Func
-        self.U8ms = Pyodbc("10.56.164.234", "UFDATA_006_2019", "sa", "@4miNisTr@t0r")  # U8的数据库链接
-        self.Oms = Pyodbc("10.56.164.228", "KPI", "sa", "Chem123#")  # 224的数据库链接
+        self.func = Func  # UFDATA_006_2019
+        self.U8ms = Pyodbc("10.56.164.234", "UFDATA_999_2019", "sa", "@4miNisTr@t0r")  # U8的数据库链接
+        self.Oms = Pyodbc("10.56.164.228", "KPI", "sa", "Chem123#")  # 18的数据库链接
 
     def InventoryFunc(self):
 
@@ -44,8 +44,8 @@ class U8Data:
 
     def MRPFunc(self):
         CountSql1, CountSql2, MRPDataSql = self.func.ReturnMRPSql()
-        MRPDataData1 = self.U8ms.ExecQuery(CountSql1)  # 查询获取U8数据库数据
-        MRPDataData2 = self.U8ms.ExecQuery(CountSql2)  # 查询获取U8数据库数据
+        # MRPDataData1 = self.U8ms.ExecQuery(CountSql1)  # 查询获取U8数据库数据
+        # MRPDataData2 = self.U8ms.ExecQuery(CountSql2)  # 查询获取U8数据库数据
         MRPDataData3 = self.U8ms.ExecQuery(MRPDataSql)  # 查询获取U8数据库数据
 
 

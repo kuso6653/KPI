@@ -7,7 +7,7 @@ import pandas as pd
 class Pyodbc:
     def __init__(self, ip, database, name, password):
         self.conn = pyodbc.connect(
-            # "DRIVER={ODBC Driver 17 for SQL Server};SERVER=10.56.164.228;DATABASE=KPI;UID=sa;PWD=Chem123#")
+            # "DRIVER={ODBC Driver 17 for SQL Server};SERVER=10.56.164.18;DATABASE=KPI;UID=sa;PWD=Chem123#")
             "DRIVER={ODBC Driver 17 for SQL Server};" + f"SERVER={ip};DATABASE={database};UID={name};PWD={password}")
         # self.conn.setencoding(encoding='utf8')
 
