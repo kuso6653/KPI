@@ -26,7 +26,7 @@ class OrderConversion:
                 self.ThrAgoMRPData = pd.read_excel(f"{self.path}/DATA/SCM/OP/MRP计划维护--全部{str(yesterday)[:10]}.XLSX",
                                                    usecols=['物料编码', '物料名称', '需求跟踪号', '需求跟踪行号', '物料属性', '是否客供料', '开工日期',
                                                             '采购员名称'],
-                                                   converters={'物料编码': int, '需求跟踪行号': int, '开工日期': str}
+                                                    converters={'物料编码': int, '需求跟踪行号': int, '开工日期': str}
                                                    )
                 self.ThrAgoMRPData = self.ThrAgoMRPData.rename(columns={'采购员名称': '默认采购员'})
 
