@@ -54,7 +54,7 @@ class OrderCreation:
         self.ProductionData['制单时间'] = self.ProductionData['制单时间'].astype(datetime64)
         self.ProductionData = self.ProductionData.dropna(subset=['生产批号'])  # 去除nan的列
         self.ProductionData['生产批号'] = self.ProductionData['生产批号'].str[:5]  # 截取前五位
-        self.Material_data = pd.read_excel(f"{self.path}/DATA/SCM/存货档案2022-02-28.XLSX",
+        self.Material_data = pd.read_excel(f"{self.path}/DATA/SCM/存货档案{self.ThisMonthEnd}.XLSX",
                                            usecols=['存货编码', '计划默认属性', '启用日期'],
                                            converters={'启用日期': datetime64, "存货编码": str})
 

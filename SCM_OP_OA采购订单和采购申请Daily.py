@@ -12,7 +12,7 @@ import gevent, time, requests
 from gevent.queue import Queue
 
 monkey.patch_all()
-
+import Func
 from dateutil.relativedelta import relativedelta
 from get_holiday_cn.client import getHoliday
 
@@ -118,8 +118,10 @@ class GetWorkHour:
 
 class GetOAFunc:
     def __init__(self, Cookie):
-        self.file_path = "./生产性&非生产性物料采购订单执行效率"
+        self.file_name = "/RESULT/SCM/OP/生产性&非生产性物料采购订单执行效率"
         self.Cookie = Cookie
+        self.func = Func
+        self.path = Func.Path()
         self.PO = 'ProcureContract'
         self.PR = 'SelectPurchase'
         self.headers = {
@@ -271,10 +273,10 @@ class GetOAFunc:
                   }],
                 ignore_index=True)
 
-        self.PRToPo2.to_excel(f'{self.file_path}{self.TodayTime}.xlsx', sheet_name="非生产性物料采购效率统计", index=False)
+        self.PRToPo2.to_excel(f'{self.path}{self.file_name}{self.TodayTime}.xlsx', sheet_name="非生产性物料采购效率统计", index=False)
 
-        SaveBook = load_workbook(f'{self.file_path}{self.TodayTime}.xlsx')
-        writer = pd.ExcelWriter(f'{self.file_path}{self.TodayTime}.xlsx', engine='openpyxl')
+        SaveBook = load_workbook(f'{self.path}{self.file_name}{self.TodayTime}.xlsx')
+        writer = pd.ExcelWriter(f'{self.path}{self.file_name}{self.TodayTime}.xlsx', engine='openpyxl')
         writer.book = SaveBook
         self.PO_Productive.to_excel(writer, '生产性物料采购效率统计', index=False)
         writer.save()

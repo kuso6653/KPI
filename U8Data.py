@@ -43,9 +43,9 @@ class U8Data:
             self.Oms.ExecNonQuery(InsertSql, str1)  # 读取的数据一行行插入数据库
 
     def MRPFunc(self):
-        CountSql1, CountSql2, MRPDataSql = self.func.ReturnMRPSql()
-        # MRPDataData1 = self.U8ms.ExecQuery(CountSql1)  # 查询获取U8数据库数据
-        # MRPDataData2 = self.U8ms.ExecQuery(CountSql2)  # 查询获取U8数据库数据
+        CountSql1, CountSql2, MRPDataSql, LinSql = self.func.ReturnMRPSql()
+        self.U8ms.ExecNonQuery2(CountSql1)  # 查询获取U8数据库数据
+        LinSqlData = self.U8ms.ExecQuery(LinSql)  # 查询获取U8数据库数据
         MRPDataData3 = self.U8ms.ExecQuery(MRPDataSql)  # 查询获取U8数据库数据
 
 

@@ -201,6 +201,8 @@ def ReturnMRPSql():  # 返回U8数据库查询SQL 的count 和具体的查询数
         and ( n.SupplyType In (0,1,2,3,7))  Order by n.PlanCode  Select Count(SortNo) From ##NetDemandPagesData132895399245185579_5d47b5994d584bb8a6249248256aaac1
     """
     MRPDataSql = """
-        exec sp_executesql N'exec Usp_MP_MP04005_data @StartNo, @EndNo,
-        ##NetDemandPagesData132895399245185579_5d47b5994d584bb8a6249248256aaac1',N'@StartNo int,@EndNo int',@StartNo=1,@EndNo=1921"""
-    return CountSql1, CountSql2, MRPDataSql
+        exec Usp_MP_MP04005_data 1, 1971, '##NetDemandPagesData132895399245185579_5d47b5994d584bb8a6249248256aaac1';"""
+    LinSql = """
+    select count(*) from ##NetDemandPagesData132895399245185579_5d47b5994d584bb8a6249248256aaac1
+    """
+    return CountSql1, CountSql2, MRPDataSql,LinSql

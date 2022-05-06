@@ -1,6 +1,6 @@
 # -*-coding:utf-8-*-
 import time
-import pyodbc
+from adodbapi import connect
 import pandas as pd
 
 

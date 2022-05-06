@@ -19,7 +19,6 @@ class Pyodbc:
             return self.cursor
 
     def ExecQuery(self, sql):
-        time.sleep(2)
         cur = self.__GetConnect()
         cur.execute(sql)
         resList = cur.fetchall()
@@ -33,6 +32,7 @@ class Pyodbc:
         resList = cur.fetchone()
 
         return resList
+
     def ExecNonQuery(self, sql, insert_str):
         cur = self.__GetConnect()
         cur.execute(sql, insert_str)
