@@ -24,9 +24,8 @@ class MaterialMaintenance:
     def CheckDataStock(self, BaseData, NewData):
         BaseData = BaseData.dropna(subset=['存货编码'])  # 去除nan的列
         NewData = NewData.dropna(subset=['存货编码'])  # 去除nan的列
-        out_data = pd.merge(BaseData.drop(labels=['主要供货单位名称', '最低供应量', '采购员名称', '固定提前期', '计划默认属性', '启用日期', '停用日期', '无需采购件', '计划方法'], axis=1),
-                            NewData,
-                            on=['存货编码', '存货名称'])
+        out_data = pd.merge(BaseData.drop(labels=['主要供货单位名称', '最低供应量', '采购员名称', '固定提前期', '计划默认属性', '启用日期', '停用日期',
+                                                  '无需采购件', '计划方法', '供应类型'], axis=1), NewData, on=['存货编码', '存货名称'])
         out_data = out_data[out_data.isnull().any(axis=1)]
         out_data = out_data.loc[out_data["固定提前期"] == 0]
 
@@ -58,11 +57,12 @@ class MaterialMaintenance:
                 try:  # 存货档案-20211001
                     base_data = pd.read_excel(f"{self.path}/DATA/SCM/存货档案{year}-{last_month}-{work_day}.XLSX",
                                               usecols=['存货编码', '存货名称', '主要供货单位名称', '采购员名称', '最低供应量', '固定提前期', '计划默认属性',
-                                                       '启用日期', '停用日期', '无需采购件', '计划方法'],
+                                                       '启用日期', '停用日期', '无需采购件', '计划方法', '供应类型'],
                                               converters={'最低供应量': int, '固定提前期': int}
                                               )
                     base_data = base_data.loc[base_data["计划默认属性"] == "采购"]
                     base_data = base_data.loc[base_data["计划方法"] != "N"]
+                    base_data = base_data.loc[base_data["供应类型"] != "虚拟件"]
                     base_data = base_data[
                         (base_data["停用日期"].isnull()) & (base_data["无需采购件"].isnull())]
                     base_data_stock.append(base_data)
@@ -75,11 +75,12 @@ class MaterialMaintenance:
                 try:
                     self.new_data = pd.read_excel(f"{self.path}/DATA/SCM/存货档案{year}-{this_month}-{work_day}.XLSX",
                                                   usecols=['存货编码', '存货名称', '主要供货单位名称', '采购员名称', '最低供应量', '固定提前期',
-                                                           '计划默认属性', '启用日期', '停用日期', '无需采购件', '计划方法'],
+                                                           '计划默认属性', '启用日期', '停用日期', '无需采购件', '计划方法', '供应类型'],
                                                   converters={'最低供应量': int, '固定提前期': int, '启用日期': datetime64}
                                                   )
                     self.new_data = self.new_data.loc[self.new_data["计划默认属性"] == "采购"]
                     self.new_data = self.new_data.loc[self.new_data["计划方法"] != "N"]
+                    self.new_data = self.new_data.loc[self.new_data["供应类型"] != "虚拟件"]
                     self.new_data = self.new_data[
                         (self.new_data["停用日期"].isnull()) & (self.new_data["无需采购件"].isnull())]
                 except:
