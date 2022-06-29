@@ -103,8 +103,9 @@ class OrderConversion:
         ApproveNotTime = df2.loc[df2["请购单审核时间"].isnull()]  # 筛选 请购单审核时间 为空的值
         df3 = Approve.loc[Approve["采购订单号"].notnull()]  # 筛选 采购订单号 不为空的值
         df4 = Approve.loc[Approve["采购订单号"].isnull()]  # 筛选 采购订单号 为空的值
-        # df3.to_excel(f'./demo.xlsx', index=False)
+        df3.to_excel(f'./demo.xlsx', index=False)
         df3['转化延时'] = ((df3['采购订单制单时间'] - df3['请购单审核时间']) / pd.Timedelta(1, 'H')).astype(int)
+
         df4 = df4.loc[df4['建议订货日期'] < datetime64(str(self.today)[:10])]
 
         df3.to_excel(f'{self.path}/RESULT/SCM/OP/采购订单转换及时率{str(self.today)[:10]}.xlsx', sheet_name="二月份至今的请购单列表",

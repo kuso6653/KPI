@@ -100,16 +100,13 @@ class GetOAFunc:
                 for i, j, k, n in zip(approval_list, name_list, time_list, opinion_list):
                     if self.func.GeneralOffice(i):
                         TimeList.append(k)  # 获取 综合管理部盖章 的时间
-                    if self.func.OrderRegistration(i):
-                        TimeList.append(k)
-            if len(TimeList) == 2:
+                    # if self.func.OrderRegistration(i):
+                    #     TimeList.append(k)
+            if len(TimeList) == 1:
                 self.SalesOrderDataOA = self.SalesOrderDataOA.append(
                     {'U8销售合同单号': U8_code, '申请人': name, '申请部门': dept, 'OA合同审批时间': TimeList[0],
                      }, ignore_index=True)
             TimeList.clear()
-
-    def mkdir(self, path):
-        self.func.mkdir(path)
 
     def save(self):
         if len(self.SalesOrderDataOA) != 0:
@@ -122,10 +119,7 @@ class GetOAFunc:
                     / pd.Timedelta(1, 'H')).astype(int)
             self.SalesOrderDataOA.loc[self.SalesOrderDataOA["审批延时/H"] > 48, "下达及时率"] = "超时"  # 计算出来的审批延时大于3天为超时
             self.SalesOrderDataOA.loc[self.SalesOrderDataOA["审批延时/H"] <= 48, "下达及时率"] = "正常"  # 小于等于3天为正常
-            path = f"{self.path}/RESULT/SDCS"
-            self.mkdir(path)
-            file_path = path + '/' + '销售订单下达及时率' + '.xlsx'
-            self.SalesOrderDataOA.to_excel(file_path, index=False)
+            self.SalesOrderDataOA.to_excel(f"{self.path}/RESULT/SDCS/销售订单下达及时率.xlsx", index=False)
 
     def run(self):
         url = f'http://portal.chemchina.com/oa08/dept509/{self.PR}.nsf/vwAll?ReadViewEntries&start=1&count=20'
