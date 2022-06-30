@@ -27,14 +27,28 @@ class OrderConversion:
         OtherThisMonthStart = str(self.ThisMonthStart).split(" ")[0].replace("-", "")
         OtherLastMonthStart = str(self.LastMonthStart).split(" ")[0].replace("-", "")
         OtherThisMonthEnd = str(self.ThisMonthEnd).split(" ")[0].replace("-", "")
+        self.PRProcessData = pd.read_excel(f"{self.path}/DATA/SCM/OP/请购执行进度表.XLSX",
+                                           usecols=[1, 3, 6, 7, 8, 9, 10, 14, 15, 16, 20, 23], header=4,
+                                           names=["请购单号", "请购单审核日期", "请购单行号", "存货编码", "存货名称", "规格型号", "数量", "采购订单号", "采购订单行号",
+                                                  "采购订单下单日期", "计划到货日期", "采购订单制单人"],
+                                           converters={'请购单号': str, '请购单行号': str, '存货编码': str, '数量': float,
+                                                       '采购订单号': str, '采购订单行号': str, '计划到货日期': datetime64,
+                                                       '采购订单下单日期': datetime64, '请购单审核日期': datetime64})
+        self.PROnlyData = self.PRProcessData.loc[self.PRProcessData["采购订单号"].isnull()]
+        self.PROnlyData = self.PROnlyData.dropna(subset=['请购单号'])  # 去除nan的列
+        self.PRWithinPOData = self.PRProcessData.loc[self.PRProcessData["采购订单号"].notnull()]
+
         self.po_data = pd.read_excel(f"{self.path}/DATA/SCM/OP/采购订单列表.XLSX",
-                                     usecols=['请购单号', '存货编码', '存货名称', '行号'],
-                                     converters={'请购单号': str, '订单编号': int, '行号': int, '存货编码': int}
+                                     usecols=['订单编号', '存货编码', '行号', '行关闭人'],
+                                     converters={'订单编号': str, '行号': int, '存货编码': int}
                                      )
+        self.po_data = self.po_data.rename(columns={'订单编号': '采购订单号', '行号': '采购订单行号'})  # 重命名
+
         self.pr_data = pd.read_excel(f"{self.path}/DATA/SCM/OP/请购单列表.XLSX",
-                                     usecols=['单据号', '存货编码', '存货名称', '行号'],
+                                     usecols=['单据号', '存货编码', '行号', '行关闭人'],
                                      converters={'单据号': str, '行号': int, '存货编码': int}
                                      )
+        self.pr_data = self.pr_data.rename(columns={'单据号': '请购单号', '行号': '请购单行号'})  # 重命名
 
     def mkdir(self, path):
         self.func.mkdir(path)
@@ -106,22 +120,32 @@ class OrderConversion:
         self.GroupMRPData = pd.concat(self.GroupMRPList, axis=0, ignore_index=True)
 
     def ThisMonthNotConverted(self):  # 当月未转换MRP清单
-        self.pr_data = self.pr_data.rename(columns={'单据号': '请购单号'})  # 修改单据号为请购单号
+
         self.pr_data = self.pr_data.dropna(subset=['存货编码'])  # 去除nan的列
         self.po_data = self.po_data.dropna(subset=['存货编码'])  # 去除nan的列
         # pr-po 取差集
-        self.pr_data = self.pr_data.append(self.po_data)
-        self.pr_data = self.pr_data.append(self.po_data)
-        self.pr_data.drop_duplicates(keep=False, inplace=True)
+        PRNotConvertData = pd.merge(self.PROnlyData, self.pr_data, on=['请购单号', '存货编码', '请购单行号'], how="left")
+        PRNotConvertData = PRNotConvertData.loc[PRNotConvertData['行关闭人'].isnull()]
 
-        self.pr_data.reset_index()
+        PRDelayPOData = pd.merge(self.PRWithinPOData, self.po_data, on=['采购订单号', '存货编码', '采购订单行号'], how="left")
+        PRDelayPOData['下单延时/H'] = (
+                (PRDelayPOData['采购订单下单日期'] - PRDelayPOData['请购单审核日期']) / pd.Timedelta(1, 'H')).astype(int)
+        PRDelayPOData = PRDelayPOData.loc[PRDelayPOData['行关闭人'].isnull()]
+        PRDelayPOData.loc[PRDelayPOData["下单延时/H"] > 48, "创建及时率"] = "超时"  # 计算出来的审批延时大于1天为超时
+        PRDelayPOData.loc[PRDelayPOData["下单延时/H"] <= 48, "创建及时率"] = "正常"  # 小于等于1天为正常
+        # self.pr_data = self.pr_data.append(self.po_data)
+        # self.pr_data.drop_duplicates(keep=False, inplace=True)
+        # self.pr_data.reset_index()
+
         #  当月大于2天的未转换MRP数据筛选
         MRPNow_data = self.GroupMRPData[self.GroupMRPData['抓取时间'] >= datetime64(self.this_month_check)]
         self.mkdir(self.path + '/RESULT/SCM/OP')
-        self.pr_data.to_excel(f'{self.path}/RESULT/SCM/OP/采购订单转换及时率.xlsx', sheet_name="当月未转换PR清单", index=False)
+        PRNotConvertData.to_excel(f'{self.path}/RESULT/SCM/OP/采购订单转换及时率.xlsx', sheet_name="当月未转换PR清单", index=False)
+
         book = load_workbook(f'{self.path}/RESULT/SCM/OP/采购订单转换及时率.xlsx')
         writer = pd.ExcelWriter(f"{self.path}/RESULT/SCM/OP/采购订单转换及时率.xlsx", engine='openpyxl')
         writer.book = book
+        PRDelayPOData.to_excel(writer, "历史转换PR清单", index=False)
         MRPNow_data.to_excel(writer, "当月未转换MRP清单", index=False)
         writer.save()
 
