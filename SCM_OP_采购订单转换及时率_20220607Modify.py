@@ -128,9 +128,9 @@ class OrderConversion:
         PRNotConvertData = PRNotConvertData.loc[PRNotConvertData['行关闭人'].isnull()]
 
         PRDelayPOData = pd.merge(self.PRWithinPOData, self.po_data, on=['采购订单号', '存货编码', '采购订单行号'], how="left")
-        PRDelayPOData = PRDelayPOData.loc[PRDelayPOData['行关闭人'].isnull()]
         PRDelayPOData['下单延时/H'] = (
-                (self.PRWithinPOData['采购订单下单日期'] - self.PRWithinPOData['请购单审核日期']) / pd.Timedelta(1, 'H')).astype(int)
+                (PRDelayPOData['采购订单下单日期'] - PRDelayPOData['请购单审核日期']) / pd.Timedelta(1, 'H')).astype(int)
+        PRDelayPOData = PRDelayPOData.loc[PRDelayPOData['行关闭人'].isnull()]
         PRDelayPOData.loc[PRDelayPOData["下单延时/H"] > 48, "创建及时率"] = "超时"  # 计算出来的审批延时大于1天为超时
         PRDelayPOData.loc[PRDelayPOData["下单延时/H"] <= 48, "创建及时率"] = "正常"  # 小于等于1天为正常
         # self.pr_data = self.pr_data.append(self.po_data)
