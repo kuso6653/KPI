@@ -58,7 +58,7 @@ class MaterialMaintenance:
                     base_data = pd.read_excel(f"{self.path}/DATA/SCM/存货档案{year}-{last_month}-{work_day}.XLSX",
                                               usecols=['存货编码', '存货名称', '主要供货单位名称', '采购员名称', '最低供应量', '固定提前期', '计划默认属性',
                                                        '启用日期', '停用日期', '无需采购件', '计划方法', '供应类型'],
-                                              converters={'最低供应量': int, '固定提前期': int}
+                                              converters={'最低供应量': int, '固定提前期': int, '存货编码': str}
                                               )
                     base_data = base_data.loc[base_data["计划默认属性"] == "采购"]
                     base_data = base_data.loc[base_data["计划方法"] != "N"]
@@ -76,7 +76,7 @@ class MaterialMaintenance:
                     self.new_data = pd.read_excel(f"{self.path}/DATA/SCM/存货档案{year}-{this_month}-{work_day}.XLSX",
                                                   usecols=['存货编码', '存货名称', '主要供货单位名称', '采购员名称', '最低供应量', '固定提前期',
                                                            '计划默认属性', '启用日期', '停用日期', '无需采购件', '计划方法', '供应类型'],
-                                                  converters={'最低供应量': int, '固定提前期': int, '启用日期': datetime64}
+                                                  converters={'最低供应量': int, '固定提前期': int, '启用日期': datetime64, '存货编码': str}
                                                   )
                     self.new_data = self.new_data.loc[self.new_data["计划默认属性"] == "采购"]
                     self.new_data = self.new_data.loc[self.new_data["计划方法"] != "N"]
