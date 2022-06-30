@@ -53,7 +53,7 @@ class SelfMaterial:
                     base_data = pd.read_excel(f"{self.path}/DATA/SCM/存货档案{NowYear}-{LastMonth}-{work_day}.XLSX",
                                               usecols=['存货编码', '存货名称', '计划默认属性', '固定提前期', '生产部门名称', '变动提前期', '变动基数',
                                                        '启用日期', '停用日期', '无需采购件', '计划方法', '供应类型'],
-                                              converters={'最低供应量': int, '变动提前期': int, '变动基数': float}
+                                              converters={'最低供应量': int, '变动提前期': int, '变动基数': float, '存货编码': str}
                                               )
                     base_data = base_data.loc[base_data["计划方法"] != 'N']
                     base_data = base_data.loc[base_data["供应类型"] != '虚拟件']
@@ -71,7 +71,7 @@ class SelfMaterial:
                     self.new_data = pd.read_excel(f"{self.path}/DATA/SCM/存货档案{NowYear}-{ThisMonth}-{work_day}.XLSX",
                                                   usecols=['存货编码', '存货名称', '计划默认属性', '固定提前期', '生产部门名称', '变动提前期', '变动基数',
                                                            '启用日期', '停用日期', '无需采购件', '计划方法', '供应类型'],
-                                                  converters={'最低供应量': int, '变动提前期': int, '变动基数': float}
+                                                  converters={'最低供应量': int, '变动提前期': int, '变动基数': float, '存货编码': str}
                                                   )
                     self.new_data = self.new_data.loc[self.new_data["计划默认属性"] == "自制"]
                     self.new_data = self.new_data.loc[self.new_data["计划方法"] != "N"]
