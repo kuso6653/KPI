@@ -17,9 +17,10 @@ class ArriveTime:
         self.LastMonthEnd = str(self.LastMonthEnd).split(" ")[0].replace("-", "")
         self.PurchaseInData = pd.read_excel(
             f"{self.path}/DATA/SCM/OP/采购订单列表.XLSX",
-            usecols=['订单编号', '行号', '实际到货日期', '制单人'],
+            usecols=['订单编号', '行号', '实际到货日期', '制单人', '行关闭人'],
             converters={'行号': int, '实际到货日期': datetime64})
         self.PurchaseInData = self.PurchaseInData.rename(columns={'制单人': '采购员'})
+        self.PurchaseInData = self.PurchaseInData.loc[self.PurchaseInData["行关闭人"].isnull()]  # 筛出未关闭的行
 
         self.Prescription = pd.read_excel(
             f"{self.path}/DATA/SCM/采购时效性统计表.XLSX",
@@ -46,8 +47,8 @@ class ArriveTime:
             '20:00:00')
         ThisMonthArriveData['计划到货日期'] = pd.to_datetime(ThisMonthArriveData['计划到货日期'].astype(str)) + pd.to_timedelta(
             '20:00:00')
-        ThisMonthNoArriveData = ThisMonthArriveData[ThisMonthArriveData.isnull().any(axis=1)]  #
-        ThisMonthArriveData = ThisMonthArriveData[ThisMonthArriveData['到货单制单时间'].notnull()]  #
+        ThisMonthNoArriveData = ThisMonthArriveData[ThisMonthArriveData['到货单号'].isnull()]  # 筛选出未到货的行
+        ThisMonthArriveData = ThisMonthArriveData[ThisMonthArriveData['到货单号'].notnull()]  # 筛选出已到货的行
         ThisMonthArriveData["实际审批延时/H"] = (
                 (ThisMonthArriveData["到货单制单时间"] - ThisMonthArriveData["实际到货日期"]) / pd.Timedelta(1, 'H')).astype(int)
         ThisMonthArriveData.loc[ThisMonthArriveData["实际审批延时/H"] > 72, "实际单据状态"] = "逾期"
