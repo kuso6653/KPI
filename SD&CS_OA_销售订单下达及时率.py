@@ -85,15 +85,21 @@ class SalesOrder:
             # information_html为获取到的基本信息里头的数据，因为基本信息、附件、流转意见等等都在同一个界面展示，所以information_html为基本信息的html
             code = re.findall(
                 r'<input name="FormID" value="(.*?)"', information_html)  # 申请单号
-            U8_code = re.findall(
-                r'<input name="fldU8HeTongBH" value="(.*?)"',  # U8销售合同单号
+            Contract_code = re.findall(
+                r'<input name="fldHeTongBH" value="(.*?)"',  # 合同单号
                 information_html)
+            if str(Contract_code[0]).startswith('XS'):  # 模糊查询以XS开头的:
+                U8_code = str(Contract_code[0]).replace(' ', '')
+            else:
+                U8_code = re.findall(
+                    r'<input name="fldU8HeTongBH" value="(.*?)"',  # U8销售合同单号
+                    information_html)[0]
             name = re.findall(r'<input name="ApplyPsnCN" value="(.*?)" id="ApplyPsnCN" ', information_html)  # 申请人
             dept = re.findall(r'<input name="ApplyDept" value="(.*?)" id="ApplyDept"', information_html)  # 申请部门
 
             if len(code[0]) == 0:  # 单号为空
                 continue
-            elif int(code[0][:6]) <= 202110:
+            elif int(code[0][:6]) <= 202204:
                 return True
             try:
                 wander_html = self.driver.find_element_by_xpath('//*[@id="DFlow_MindList"]').get_attribute("outerHTML")
@@ -103,7 +109,7 @@ class SalesOrder:
                 time.sleep(3)
                 wander_html = self.driver.find_element_by_xpath('//*[@id="DFlow_MindList"]').get_attribute("outerHTML")
                 print("有进来")
-            if U8_code[0] != "" and is_end == "结束":
+            if U8_code != "" and is_end == "结束":
                 name_list = re.findall(r'<div class="col-md-4"><b>审批人：</b>(.*?)</div>', wander_html)  # 审批人
                 time_list = re.findall(r'<div class="col-md-4"><b>时间：</b>(.*?)</div>', wander_html)  # 时间
                 opinion_list = re.findall(r'<pre class="prettyprint linenums prettyprinted">(.*?)</pre>',
@@ -116,7 +122,7 @@ class SalesOrder:
                         TimeList.append(k)
             if len(TimeList) == 2:
                 self.SalesOrderDataOA = self.SalesOrderDataOA.append(
-                    {'U8销售合同单号': U8_code[0], '申请人': name[0], '申请部门': dept[0], 'OA合同审批时间': TimeList[0],
+                    {'U8销售合同单号': U8_code, '申请人': name[0], '申请部门': dept[0], 'OA合同审批时间': TimeList[0],
                      }, ignore_index=True)
             TimeList.clear()
         time.sleep(1)
