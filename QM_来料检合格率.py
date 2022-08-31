@@ -87,7 +87,7 @@ class QualityControl:
 
         self.ExPOData = self.QMData_temp1[self.QMData_temp1['行备注'].str.contains('挤')]  # 筛出挤出机项目的行
 
-        self.PlasticPOData = self.QMData_temp1[~self.QMData_temp1['行备注'].str.contains('橡|挤')]  # 筛出挤出机项目临时表
+        self.PlasticPOData = self.QMData_temp1[~self.QMData_temp1['行备注'].str.contains('橡|挤')]  # 筛出注塑机项目的行
         # self.PlasticPOData = self.QMData_temp1[~self.QMData_temp1['行备注'].str.contains('挤')]  # 筛出挤出机项目的行
         # self.PlasticPOData = pd.concat([PlasticPOData_temp1, PlasticPOData_temp2], ignore_index=True)  # 筛出挤出机项目的行
 
