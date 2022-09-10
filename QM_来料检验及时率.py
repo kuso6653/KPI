@@ -32,8 +32,8 @@ class MaterialInspection:
         PurchaseInData = PurchaseInData[PurchaseInData['报检审核时间'] <= datetime64(self.ThisMonthEnd)]  # 筛选出本月的单据
         PurchaseInData['审批延时'] = ((PurchaseInData['检验审核时间'] - PurchaseInData['报检审核时间']) / pd.Timedelta(1, 'H')).astype(
             int)
-        PurchaseInData.loc[PurchaseInData["审批延时"] > 24, "单据状态"] = "超时"  # 计算出来的质检的审批延时大于24为超时
-        PurchaseInData.loc[PurchaseInData["审批延时"] <= 24, "单据状态"] = "正常"  # 小于等于24为正常
+        PurchaseInData.loc[PurchaseInData["审批延时"] > 48, "单据状态"] = "超时"  # 计算出来的质检的审批延时大于48为超时
+        PurchaseInData.loc[PurchaseInData["审批延时"] <= 48, "单据状态"] = "正常"  # 小于等于48为正常
         self.SaveFile(PurchaseInData, ApproveData)
 
     def SaveFile(self, PurchaseInData, ApproveData):
