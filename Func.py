@@ -71,6 +71,24 @@ def WorkDays(year, month):
             WorkDay.append(day)
     return WorkDay
 
+# 获取当月工作日函数
+def WorkDays2(year, month):
+    # 利用日历函数，创建截取工作日日期
+    cal = calendar.Calendar()
+    WorkDay = []  # 创建工作日数组
+    for week in cal.monthdayscalendar(int(year), int(month)):
+        for i, day in enumerate(week):
+            # 为0或者大于等于5的为休息日
+            if day == 0 or i >= 5:
+                continue
+            # 否则加入数组
+            if day < 10:
+                day = str(year) + '-' + str(month) + '-'+"0" + str(day)
+            else:
+                day = str(year) + '-' + str(month) + '-' + str(day)
+            WorkDay.append(day)
+    return WorkDay
+
 
 # 获取当月每天日期函数
 def EveryDays(year, month):
