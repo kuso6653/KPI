@@ -36,8 +36,22 @@ def GetHoliday(date):
 
 
 class GetOAFunc:
-    def __init__(self, Cookie):
-        self.Cookie = Cookie
+    def __init__(self):
+        driver = webdriver.Chrome()  # 创建对象，启动谷歌浏览器
+        driver.implicitly_wait(20)  # 隐式等待
+        txt = ReadTxT()  # 获取密码
+        driver.get("http://portal.chemchina.com/")  # 请求url
+        driver.find_element(By.NAME, 'username').send_keys('fjthadmin')  # 输入账号密码
+        driver.find_element(By.NAME, 'password').send_keys(txt)  # 输入账号密码
+        driver.implicitly_wait(20)
+        driver.find_element(By.XPATH, '//*[@id="warp"]/form/div[2]/div[3]/div[4]/input[3]').click()  # 点击登录
+        driver.implicitly_wait(20)
+        # 获取和拼接cookie
+        cookie = driver.get_cookies()
+        cookie = cookie[2]['name'] + '=' + cookie[2]['value'] + ';' + cookie[1]['name'] + '=' + cookie[1][
+            'value'] + ';' + cookie[0]['name'] + '=' + cookie[0]['value']
+        driver.quit()  # 退出浏览器
+        self.Cookie = cookie
         self.PR = 'SelectPurchase'
         self.headers = {
             'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
@@ -166,19 +180,6 @@ def ReadTxT():
 
 
 if __name__ == '__main__':
-    driver = webdriver.Chrome()  # 创建对象，启动谷歌浏览器
-    driver.implicitly_wait(20)  # 隐式等待
-    txt = ReadTxT()  # 获取密码
-    driver.get("http://portal.chemchina.com/")  # 请求url
-    driver.find_element(By.NAME, 'username').send_keys('fjthadmin')  # 输入账号密码
-    driver.find_element(By.NAME, 'password').send_keys(txt)  # 输入账号密码
-    driver.implicitly_wait(20)
-    driver.find_element(By.XPATH, '//*[@id="warp"]/form/div[2]/div[3]/div[4]/input[3]').click()  # 点击登录
-    driver.implicitly_wait(20)
-    # 获取和拼接cookie
-    cookie = driver.get_cookies()
-    cookie = cookie[2]['name'] + '=' + cookie[2]['value'] + ';' + cookie[1]['name'] + '=' + cookie[1][
-        'value'] + ';' + cookie[0]['name'] + '=' + cookie[0]['value']
-    driver.quit()  # 退出浏览器
-    getOA = GetOAFunc(cookie)
+
+    getOA = GetOAFunc()
     getOA.run()
