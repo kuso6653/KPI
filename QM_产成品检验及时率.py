@@ -8,9 +8,9 @@ class FinishedProduct:
         self.func = Func
         self.ThisMonthStart, self.ThisMonthEnd, self.LastMonthEnd, self.LastMonthStart = self.func.GetDate()
         # 将上月首尾日期切割
-        self.LastMonthStart = str(self.LastMonthStart).split(" ")[0].replace("-", "")
-        self.ThisMonthStart = str(self.ThisMonthStart).split(" ")[0].replace("-", "")
-        self.ThisMonthEnd = str(self.ThisMonthEnd).split(" ")[0].replace("-", "")
+        self.LastMonthStart = str(self.LastMonthStart).split(" ")[0]  # .replace("-", "")
+        self.ThisMonthStart = str(self.ThisMonthStart).split(" ")[0]
+        self.ThisMonthEnd = str(self.ThisMonthEnd).split(" ")[0]
         self.path = Func.Path()
 
     def mkdir(self, path):
@@ -32,6 +32,10 @@ class FinishedProduct:
                                         '报检审核时间': datetime64,
                                         '检验审核时间': datetime64})
         ProductionData = ProductionData.dropna(axis=0, how='any')  # 去除所有nan的列
+        ProductionData = ProductionData[
+            ProductionData['检验审核时间'] >= datetime64(self.ThisMonthStart)]  # 筛选出本月的单据
+        # ProductionData = ProductionData[
+        #     ProductionData['检验审核时间'] <= datetime64(self.ThisMonthEnd)]  # 筛选出本月的单据
         ProductionData['审批延时'] = (
                 (ProductionData['检验审核时间'] - ProductionData['报检审核时间']) / pd.Timedelta(1, 'H')).astype(
             int)
