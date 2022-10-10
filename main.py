@@ -90,11 +90,6 @@ if __name__ == '__main__':
     except Exception as E:
         print("SCM_OM_自制物料维护及时率 not run!")
     try:
-        SM = SCM_OM_自制物料维护及时率.SelfMaterial()
-        SM.run()
-    except Exception as E:
-        print("SCM_OM_自制物料维护及时率 not run!")
-    try:
         AT = SCM_OP_准时到货率.ArriveTime()
         AT.run()
     except Exception as E:
@@ -119,12 +114,6 @@ if __name__ == '__main__':
         WH.run()
     except Exception as E:
         print("WorkHour not run!")
-    try:
-        getOA = SCM_OP_OA_非生产性物料转换及时率.GetOAFunc()
-        getOA.run()
-    except Exception as E:
-        print("SCM_OP_OA_非生产性物料转换及时率 not run!")
-
     try:
         getOA = SCM_OP_OA_非生产性物料转换及时率.GetOAFunc()
         getOA.run()
