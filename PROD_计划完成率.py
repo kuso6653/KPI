@@ -10,8 +10,8 @@ class Plan:
         self.ThisMonthStart, self.ThisMonthEnd, self.LastMonthEnd, self.LastMonthStart = self.func.GetDate()
 
         # 将上月首尾日期切割
-        self.ThisMonthStart = str(self.ThisMonthStart).split(" ")[0].replace("-", "")
-        self.ThisMonthEnd = str(self.ThisMonthEnd).split(" ")[0].replace("-", "")
+        # self.ThisMonthStart = str(self.ThisMonthStart).split(" ")[0].replace("-", "")
+        # self.ThisMonthEnd = str(self.ThisMonthEnd).split(" ")[0].replace("-", "")
 
     def mkdir(self, path):
         self.func.mkdir(path)
@@ -22,7 +22,7 @@ class Plan:
             usecols=['表体生产订单号', '生产订单行号', '制单时间', '产品编码'],
             converters={'表体生产订单号': str, '制单时间': datetime64})
         ProductionData = pd.read_excel(f"{self.path}/DATA/PROD/生产订单列表.XLSX",
-                                       usecols=['生产订单号', '物料名称', '实际完工日期', '行号'],
+                                       usecols=['生产订单号', '物料名称', '实际完工日期', '行号', '部门名称'],
                                        converters={'生产订单号': str, '实际完工日期': datetime64})
 
         GoodsInData = GoodsInData.rename(
@@ -38,8 +38,10 @@ class Plan:
         # 将天数转化为小时数
         PlanData.loc[PlanData["审批延时/H"] > 48, "单据状态"] = "超时"  # 计算出来的审批延时大于72为超时
         PlanData.loc[PlanData["审批延时/H"] <= 48, "单据状态"] = "正常"  # 小于等于72为正常
+        PlanData = PlanData[PlanData['产成品入库单制单时间'] >= datetime64(self.ThisMonthStart)]
+        PlanData = PlanData[PlanData['产成品入库单制单时间'] <= datetime64(self.ThisMonthEnd)]
 
-        order = ['生产订单号', '行号', '物料编码', '物料名称', '产成品入库单制单时间', '生产订单完工日期', '审批延时/H', '单据状态']
+        order = ['生产订单号', '行号', '物料编码', '物料名称', '部门名称', '产成品入库单制单时间', '生产订单完工日期', '审批延时/H', '单据状态']
         PlanData = PlanData[order]
         self.SaveFile(PlanData)
 
