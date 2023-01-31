@@ -21,6 +21,7 @@ import SCM_OP_采购订单转换及时率
 import SCM_SP_采购物料维护及时率
 import SCM_WM_仓库出入库及时率
 import WorkHour
+import time
 
 if __name__ == '__main__':
     try:
@@ -28,108 +29,121 @@ if __name__ == '__main__':
         PD.run()
     except Exception as E:
         print("PROD_工序派工及时率 not run!")
-
+    time.sleep(2)
     try:
         WR = PROD_报工及时率和完整率.WorkReport()
         WR.run()
     except Exception as E:
         print("PROD_报工及时率和完整率 not run!")
-
+    time.sleep(2)
     try:
         P = PROD_计划完成率.Plan()
         P.run()
     except Exception as E:
         print("PROD_计划完成率 not run!")
-
+    time.sleep(2)
     try:
         FP = QM_产成品检验及时率.FinishedProduct()
         FP.run()
     except Exception as E:
         print("QM_产成品检验及时率 not run!")
+    time.sleep(2)
     try:
         PQC = QM_产成品检验合格率.ProductQualityControl()
         PQC.run()
     except Exception as E:
         print("QM_产成品检验合格率 not run!")
-
+    time.sleep(2)
     try:
         QC = QM_来料检合格率.QualityControl()
         QC.run()
     except Exception as E:
         print("QM_来料检合格率 not run!")
+    time.sleep(2)
     try:
         MI = QM_来料检验及时率.MaterialInspection()
         MI.run()
     except Exception as E:
         print("QM_来料检验及时率 not run!")
+    time.sleep(2)
     try:
         CW = QM_跨车间工序检验及时率.CrossWorkshop()
         CW.run()
     except Exception as E:
         print("QM_跨车间工序检验及时率 not run!")
+    time.sleep(2)
     try:
         D = SCM_LOGISTIC_发货及时率.Deliver()
         D.run()
     except Exception as E:
         print("SCM_LOGISTIC_发货及时率 not run!")
-
+    time.sleep(2)
     try:
         OC = SCM_OM_生产订单创建及时率.OrderCreation()
         OC.run()
     except Exception as E:
         print("SCM_OM_生产订单创建及时率 not run!")
+    time.sleep(2)
     try:
         OM = SCM_OM_生产订单维护及时率.OrderMaintenance()
         OM.run()
     except Exception as E:
         print("SCM_OM_生产订单维护及时率 not run!")
-
+    time.sleep(2)
     try:
         SM = SCM_OM_自制物料维护及时率.SelfMaterial()
         SM.run()
     except Exception as E:
         print("SCM_OM_自制物料维护及时率 not run!")
+    time.sleep(2)
     try:
         AT = SCM_OP_准时到货率.ArriveTime()
         AT.run()
     except Exception as E:
         print("SCM_OP_准时到货率 not run!")
+    time.sleep(2)
     try:
         OC = SCM_OP_采购订单转换及时率.OrderConversion()
         OC.run()
     except Exception as E:
         print("SCM_OP_采购订单转换及时率 not run!")
+    time.sleep(2)
     try:
         MM = SCM_SP_采购物料维护及时率.MaterialMaintenance()
         MM.run()
     except Exception as E:
         print("SCM_SP_采购物料维护及时率 not run!")
+    time.sleep(2)
     try:
         W = SCM_WM_仓库出入库及时率.Warehouse()
         W.run()
     except Exception as E:
         print("SCM_WM_仓库出入库及时率 not run!")
+    time.sleep(2)
     try:
         WH = WorkHour.WorkHour()
         WH.run()
     except Exception as E:
         print("WorkHour not run!")
+    time.sleep(2)
     try:
         getOA = SCM_OP_OA_非生产性物料转换及时率.GetOAFunc()
         getOA.run()
     except Exception as E:
         print("SCM_OP_OA_非生产性物料转换及时率 not run!")
-
+    time.sleep(2)
     try:
         getOA = SCM_OP_OA_采购申请详细信息表.GetOAFunc()
         getOA.run()
     except Exception as E:
         print("SCM_OP_OA_非生产性物料转换及时率 not run!")
+    time.sleep(2)
     try:
         getOA = SCM_OP_OA_询比价详细信息.GetOAFunc()
         getOA.run()
     except Exception as E:
         print("SCM_OP_OA_询比价详细信息 not run!")
+    time.sleep(2)
     try:
         getOA = SD_CS_OA_销售订单下达及时率.GetOAFunc()
         getOA.run()
