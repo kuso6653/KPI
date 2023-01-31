@@ -12,7 +12,7 @@ class ArriveTime:
         self.path = Func.Path()
         # 将上月首尾日期切割
         self.ThisMonthStart = str(self.ThisMonthStart).split(" ")[0].replace("-", "")
-        self.ThisMonthEnd = str(self.ThisMonthEnd).split(" ")[0].replace("-", "")
+        # self.ThisMonthEnd = str(self.ThisMonthEnd).split(" ")[0].replace("-", "")
         self.LastMonthStart = str(self.LastMonthStart).split(" ")[0].replace("-", "")
         self.LastMonthEnd = str(self.LastMonthEnd).split(" ")[0].replace("-", "")
         self.PurchaseInData = pd.read_excel(
@@ -68,6 +68,8 @@ class ArriveTime:
                                        '到货单号', '到货单行号', '到货单制单时间']
         ThisMonthArriveData = ThisMonthArriveData[ThisMonthArriveData_Order]
         ThisMonthNoArriveData = ThisMonthNoArriveData[ThisMonthNoArriveData_Order]
+        ThisMonthNoArriveData = ThisMonthNoArriveData[
+            ThisMonthNoArriveData['实际到货日期'] <= datetime64(self.ThisMonthEnd)]  # 筛选出本月的单据
 
         self.mkdir(self.path + "/RESULT/SCM/OP")
         ThisMonthArriveData.to_excel(f'{self.path}/RESULT/SCM/OP/准时到货率.xlsx', sheet_name="当月准时到货率", index=False)

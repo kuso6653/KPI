@@ -40,13 +40,13 @@ class OrderConversion:
 
         self.po_data = pd.read_excel(f"{self.path}/DATA/SCM/OP/采购订单列表.XLSX",
                                      usecols=['订单编号', '存货编码', '行号', '行关闭人'],
-                                     converters={'订单编号': str, '行号': int, '存货编码': int}
+                                     converters={'订单编号': str, '行号': str, '存货编码': str}
                                      )
         self.po_data = self.po_data.rename(columns={'订单编号': '采购订单号', '行号': '采购订单行号'})  # 重命名
 
         self.pr_data = pd.read_excel(f"{self.path}/DATA/SCM/OP/请购单列表.XLSX",
                                      usecols=['单据号', '存货编码', '行号', '行关闭人'],
-                                     converters={'单据号': str, '行号': int, '存货编码': int}
+                                     converters={'单据号': str, '行号': str, '存货编码': str}
                                      )
         self.pr_data = self.pr_data.rename(columns={'单据号': '请购单号', '行号': '请购单行号'})  # 重命名
 
