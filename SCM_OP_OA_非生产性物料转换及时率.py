@@ -144,9 +144,25 @@ class GetOAFunc:
         self.merge_data.loc[self.merge_data["未及时率/H"] > 384, "创建及时率"] = "超时"  # 计算出来的审批延时大于16天为超时
         self.merge_data.loc[self.merge_data["未及时率/H"] <= 384, "创建及时率"] = "正常"  # 小于等于16天为正常
 
+        try:
+            resCount = self.merge_data['创建及时率'].value_counts()['超时']
+        except:
+            resCount = 0
+
+        resCountAll = len(self.merge_data)
+        resResult = format(float(1 - resCount / resCountAll), '.2%')
+        dict = {'当月未及时下单的非生产性物料数': [resCount], '当月非生产物料采购总数': [resCountAll],
+                '非生产性物料转换及时率': [resResult]}
+        resResult_sheet = pd.DataFrame(dict)
+
         path = f"{self.path}/RESULT/SCM/OP"
         file_path = path + '/' + '非生产性物料转换及时率' + '.xlsx'
-        self.merge_data.to_excel(file_path, index=False)
+        resResult_sheet.to_excel(file_path, "非生产性物料转换及时率", index=False)
+        book = load_workbook(file_path)
+        writer = pd.ExcelWriter(file_path, engine='openpyxl')
+        writer.book = book
+        self.merge_data.to_excel(writer, "当月非生产性物料下单情况清单", index=False)
+        writer.save()
 
     def run(self):
 

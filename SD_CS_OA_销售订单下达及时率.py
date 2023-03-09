@@ -7,6 +7,7 @@ import pandas as pd
 from dateutil.relativedelta import relativedelta
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from openpyxl import load_workbook
 import Func
 
 # 销售采购订单下达及时率
@@ -133,7 +134,24 @@ class GetOAFunc:
                     / pd.Timedelta(1, 'H')).astype(int)
             self.SalesOrderDataOA.loc[self.SalesOrderDataOA["审批延时/H"] > 48, "下达及时率"] = "超时"  # 计算出来的审批延时大于3天为超时
             self.SalesOrderDataOA.loc[self.SalesOrderDataOA["审批延时/H"] <= 48, "下达及时率"] = "正常"  # 小于等于3天为正常
-            self.SalesOrderDataOA.to_excel(f"{self.path}/RESULT/SDCS/销售订单下达及时率.xlsx", index=False)
+
+            try:
+                SalesOrderCount = self.SalesOrderDataOA['下达及时率'].value_counts()['超时']
+            except:
+                SalesOrderCount = 0
+
+            SalesOrderCountAll = len(self.SalesOrderDataOA)
+            SalesOrderResult = format(float(1 - SalesOrderCount / SalesOrderCountAll), '.2%')
+            dict = {'当月未及时下达销售订单物料数': [SalesOrderCount], '当月下达销售订单物料总数': [SalesOrderCountAll],
+                     '销售订单下达及时率': [SalesOrderResult]}
+            SalesOrderResult_sheet = pd.DataFrame(dict)
+            
+            SalesOrderResult_sheet.to_excel(f"{self.path}/RESULT/SDCS/销售订单下达及时率.xlsx", sheet_name="销售订单下达及时率", index=False)
+            book = load_workbook(f'{self.path}/RESULT/SDCS/销售订单下达及时率.xlsx')
+            writer = pd.ExcelWriter(f"{self.path}/RESULT/SDCS/销售订单下达及时率.xlsx", engine='openpyxl')
+            writer.book = book
+            self.SalesOrderDataOA.to_excel(writer, "销售订单下达情况", index=False)
+            writer.save()
 
     def run(self):
         url = f'http://portal.chemchina.com/oa08/dept509/{self.PR}.nsf/vwAll?ReadViewEntries&start=1&count=20'

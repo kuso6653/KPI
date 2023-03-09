@@ -78,6 +78,7 @@ class MaterialMaintenance:
                                                            '计划默认属性', '启用日期', '停用日期', '无需采购件', '计划方法', '供应类型'],
                                                   converters={'最低供应量': int, '固定提前期': int, '启用日期': datetime64, '存货编码': str}
                                                   )
+                    self.all_data = self.new_data
                     self.new_data = self.new_data.loc[self.new_data["计划默认属性"] == "采购"]
                     self.new_data = self.new_data.loc[self.new_data["计划方法"] != "N"]
                     self.new_data = self.new_data.loc[self.new_data["供应类型"] != "虚拟件"]
@@ -99,21 +100,35 @@ class MaterialMaintenance:
         #  当月大于7天的未维护物料数据筛选
         res = res.loc[res["固定提前期"] == 0]
         res = res[res['启用日期'] >= datetime64(self.ThisMonthStart)]
-        self.mkdir(self.path+'/RESULT/SCM/SP')
-        res.to_excel(f'{self.path}/RESULT/SCM/SP/采购物料维护及时率.xlsx', sheet_name="当月大于7天未维护的采购物料清单", index=False)
 
-    def HistoryNotMaintained(self):  # 历史未维护数据清单
+        self.HistoryNotMaintained(res)
+    def HistoryNotMaintained(self, res):  # 历史未维护数据清单
+        try:
+            resCount = res.shape[0]
+        except:
+            resCount = 0
+
+        self.all_data = self.all_data[self.all_data['启用日期'] >= datetime64(self.ThisMonthStart)]
+        resCountAll = len(self.all_data.loc[self.all_data["计划默认属性"] == "采购"])
+        resResult = format(float(1 - resCount / resCountAll), '.2%')
+        dict = {'当月未及时维护物料数': [resCount], '当月采购物料总数': [resCountAll],
+                '采购物料维护及时率': [resResult]}
+        resResult_sheet = pd.DataFrame(dict)
+
+
         self.mkdir(self.path + '/RESULT/SCM/SP')
+        resResult_sheet.to_excel(f'{self.path}/RESULT/SCM/SP/采购物料维护及时率.xlsx', sheet_name="采购物料维护及时率", index=False)
         book = load_workbook(f'{self.path}/RESULT/SCM/SP/采购物料维护及时率.xlsx')
         writer = pd.ExcelWriter(f"{self.path}/RESULT/SCM/SP/采购物料维护及时率.xlsx", engine='openpyxl')
         writer.book = book
+        res.to_excel(writer, "当月大于7天未维护的采购物料清单", index=False)
         self.new_data.to_excel(writer, "历史未维护数据清单", index=False)
         writer.save()
 
     def run(self):
         self.GetMaterialMaintenance()
         self.ThisMonthNotMaintained()
-        self.HistoryNotMaintained()
+        # self.HistoryNotMaintained()
 
 
 if __name__ == '__main__':

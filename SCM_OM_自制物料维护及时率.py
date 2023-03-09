@@ -73,6 +73,7 @@ class SelfMaterial:
                                                            '启用日期', '停用日期', '无需采购件', '计划方法', '供应类型'],
                                                   converters={'最低供应量': int, '变动提前期': int, '变动基数': float, '存货编码': str}
                                                   )
+                    self.all_data = self.new_data
                     self.new_data = self.new_data.loc[self.new_data["计划默认属性"] == "自制"]
                     self.new_data = self.new_data.loc[self.new_data["计划方法"] != "N"]
                     self.new_data = self.new_data.loc[self.new_data["供应类型"] != "虚拟件"]
@@ -84,30 +85,44 @@ class SelfMaterial:
                 self.ContrastData(BaseDataList[0], self.new_data)  # 合并检查是否存在一样的
                 del (BaseDataList[0])  # 删除第一个base
 
+
         res = pd.concat(self.SelfMaterialList, axis=0, ignore_index=True)
         res = res.drop_duplicates()
-
-        #  当月大于7天的未维护订单数据筛选
+        #  当月大于3天的未维护订单数据筛选
         res = res.loc[res["固定提前期"] == 0]
         res = res[res['启用日期'] >= datetime64(self.ThisMonthStart)]
-        self.mkdir(self.path + '/RESULT/SCM/OM')
-        res.to_excel(f'{self.path}/RESULT/SCM/OM/自制物料维护及时率.xlsx', sheet_name="当月大于3天未维护的自制物料清单", index=False)
 
-    def GetHistoryData(self):  # 历史未维护数据清单
+        self.GetHistoryData(res)
+
+    def GetHistoryData(self, res):  # 历史未维护数据清单
+        try:
+            resCount = res.shape[0]
+        except:
+            resCount = 0
+
+        self.all_data = self.all_data[self.all_data['启用日期'] >= datetime64(self.ThisMonthStart)]
+        resCountAll = len(self.all_data.loc[self.all_data["计划默认属性"] == "自制"])
+        resResult = format(float(1 - resCount / resCountAll), '.2%')
+        dict = {'当月未及时维护物料数': [resCount], '当月自制物料总数': [resCountAll],
+                '自制物料维护及时率': [resResult]}
+        resResult_sheet = pd.DataFrame(dict)
+
         self.new_data = self.new_data[self.new_data.isnull().any(axis=1)]
         #  小于当月的历史未维护订单数据筛选
         self.new_data = self.new_data.loc[self.new_data["固定提前期"] == 0]
         self.new_data = self.new_data[self.new_data['启用日期'] < datetime64(self.ThisMonthStart)]
         self.mkdir(self.path + '/RESULT/SCM/OM')
+        resResult_sheet.to_excel(f'{self.path}/RESULT/SCM/OM/自制物料维护及时率.xlsx', sheet_name="自制物料维护及时率", index=False)
         book = load_workbook(f'{self.path}/RESULT/SCM/OM/自制物料维护及时率.xlsx')
         writer = pd.ExcelWriter(f"{self.path}/RESULT/SCM/OM/自制物料维护及时率.xlsx", engine='openpyxl')
         writer.book = book
+        res.to_excel(writer, "当月大于3天未维护的自制物料清单", index=False)
         self.new_data.to_excel(writer, "历史未维护数据清单", index=False)
         writer.save()
 
     def run(self):
         self.GetThisMonthData()
-        self.GetHistoryData()
+        # self.GetHistoryData()
 
 
 if __name__ == '__main__':

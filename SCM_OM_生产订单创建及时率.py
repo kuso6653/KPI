@@ -103,12 +103,40 @@ class OrderCreation:
         try:
             NewProductionData.loc[NewProductionData["下单延时/H"] > 72, "创建及时率"] = "超时"  # 计算出来的审批延时大于3天为超时
             NewProductionData.loc[NewProductionData["下单延时/H"] <= 72, "创建及时率"] = "正常"  # 小于等于3天为正常
+
+            try:
+                NewProductionCount = NewProductionData['创建及时率'].value_counts()['超时']
+            except:
+                NewProductionCount = 0
+
+            NewProductionCountAll = NewProductionData.shape[0]
+            NewProductionResult = format(float(1 - NewProductionCount / NewProductionCountAll), '.2%')
+            dict = {'当月未及时创建生产订单新物料数': [NewProductionCount], '当月已创建生产订单新物料总数': [NewProductionCountAll],
+                    '生产订单新物料创建及时率': [NewProductionResult]}
+            NewProductionResult_sheet = pd.DataFrame(dict)
+
             # 输出新物料及时率
-            NewProductionData.to_excel(f'{self.path}/RESULT/SCM/OM/生产订单创建及时率.xlsx', sheet_name="新物料", index=False)
+            NewProductionResult_sheet.to_excel(f'{self.path}/RESULT/SCM/OM/生产订单创建及时率.xlsx', sheet_name="生产订单新物料创建及时率", index=False)
+            book = load_workbook(f'{self.path}/RESULT/SCM/OM/生产订单创建及时率.xlsx')
+            writer = pd.ExcelWriter(f"{self.path}/RESULT/SCM/OM/生产订单创建及时率.xlsx", engine='openpyxl')
+            writer.book = book
+            NewProductionData.to_excel(writer, "生产订单新物料创建情况", index=False)
+            writer.save()
 
         except:
             df = pd.DataFrame()
-            df.to_excel(f'{self.path}/RESULT/SCM/OM/生产订单创建及时率.xlsx', sheet_name="新物料", index=False)
+            NewProductionCount = 0
+            NewProductionCountAll = 0
+            NewProductionResult = 0
+            dict = {'当月未及时创建生产订单新物料数': [NewProductionCount], '当月已创建生产订单新物料总数': [NewProductionCountAll],
+                    '生产订单新物料创建及时率': [NewProductionResult]}
+            NewProductionResult_sheet = pd.DataFrame(dict)
+            NewProductionResult_sheet.to_excel(f'{self.path}/RESULT/SCM/OM/生产订单创建及时率.xlsx', sheet_name="生产订单新物料创建及时率", index=False)
+            book = load_workbook(f'{self.path}/RESULT/SCM/OM/生产订单创建及时率.xlsx')
+            writer = pd.ExcelWriter(f"{self.path}/RESULT/SCM/OM/生产订单创建及时率.xlsx", engine='openpyxl')
+            writer.book = book
+            df.to_excel(writer, "生产订单新物料创建情况", index=False)
+            writer.save()
 
     def GetOldMaterial(self):  # 获取旧物料
 
@@ -120,12 +148,25 @@ class OrderCreation:
         OldProductionData = OldProductionData.drop_duplicates(subset=["生产订单号", "行号", "物料编码"])  # 去重
         OldProductionData.loc[OldProductionData["下单延时/H"] > 24, "创建及时率"] = "超时"  # 计算出来的审批延时大于1天为超时
         OldProductionData.loc[OldProductionData["下单延时/H"] <= 24, "创建及时率"] = "正常"  # 小于等于1天为正常
+
+        try:
+            OldProductionCount = OldProductionData['创建及时率'].value_counts()['超时']
+        except:
+            OldProductionCount = 0
+
+        OldProductionCountAll = OldProductionData.shape[0]
+        OldProductionResult = format(float(1 - OldProductionCount / OldProductionCountAll), '.2%')
+        dict = {'当月未及时创建生产订单旧物料数': [OldProductionCount], '当月已创建生产订单旧物料总数': [OldProductionCountAll],
+                '生产订单旧物料创建及时率': [OldProductionResult]}
+        OldProductionResult_sheet = pd.DataFrame(dict)
+
         # 输出旧物料及时率
         self.mkdir(self.path + "/RESULT/SCM/OM")
         book = load_workbook(f'{self.path}/RESULT/SCM/OM/生产订单创建及时率.xlsx')
         writer = pd.ExcelWriter(f"{self.path}/RESULT/SCM/OM/生产订单创建及时率.xlsx", engine='openpyxl')
         writer.book = book
-        OldProductionData.to_excel(writer, "旧物料", index=False)
+        OldProductionResult_sheet.to_excel(writer, "生产订单旧物料创建及时率", index=False)
+        OldProductionData.to_excel(writer, "生产订单旧物料创建情况", index=False)
         writer.save()
 
     def run(self):

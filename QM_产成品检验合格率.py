@@ -82,23 +82,33 @@ class ProductQualityControl:
         self.ProductGRData = self.ProductGRData[
             self.ProductGRData['产成品入库单审核时间'] <= datetime64(self.ThisMonthEnd)]  # 筛选出本月的单据
         # self.ProductData = self.ProductData.loc[self.ProductData["不良品处理单号"].notnull()]  # 筛选出本月的单据
+        try:
+            ProductionCount = self.QMFailedData.shape[0]
+        except:
+            ProductionCount = 0
 
-    def SaveFile(self):
+        ProductionCountAll = self.ProductGRData.shape[0]
+        ProductionResult = format(float(1 - ProductionCount / ProductionCountAll), '.2%')
+        dict = {'当月产成品不合格数': [ProductionCount], '当月产成品入库总数': [ProductionCountAll], '产成品检验合格率': [ProductionResult]}
+        ProductionResult_sheet = pd.DataFrame(dict)
+        self.SaveFile(ProductionResult_sheet)
+
+
+    def SaveFile(self, ProductionResult_sheet):
         self.mkdir(self.path + '/RESULT/QM')
-        self.QMFailedData.to_excel(f'{self.path}/RESULT/QM/产成品检验合格率.xlsx', sheet_name="本月不合格的物料清单", index=False)
+        ProductionResult_sheet.to_excel(f'{self.path}/RESULT/QM/产成品检验合格率.xlsx', sheet_name="产成品检验合格率", index=False)
 
         book = load_workbook(f'{self.path}/RESULT/QM/产成品检验合格率.xlsx')
         writer = pd.ExcelWriter(f"{self.path}/RESULT/QM/产成品检验合格率.xlsx", engine='openpyxl')
         writer.book = book
+        self.QMFailedData.to_excel(writer, "本月不合格的物料清单", index=False)
         self.ProductGRData.to_excel(writer, "本月已入库的物料清单", index=False)
-        # self.NotQMData.to_excel(writer, "本月未质检的物料清单", index=False)
         # self.NotGRData.to_excel(writer, "本月已质检未入库的物料清单", index=False)
         # self.GRData.to_excel(writer, "本月让步接收的物料清单", index=False)
         writer.save()
 
     def run(self):
         self.ThisMonthPQM()
-        self.SaveFile()
 
 
 if __name__ == '__main__':

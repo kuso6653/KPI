@@ -2,6 +2,8 @@ from decimal import Decimal
 import pandas as pd
 import Func
 from numpy import datetime64
+from openpyxl import load_workbook
+
 
 class WorkReport:
     def __init__(self):
@@ -78,12 +80,23 @@ class WorkReport:
         EndWorkReport.loc[EndWorkReport["报工单审核时间"] > EndWorkReport["实际比较日期"], "报工状态"] = "不及时"
         EndWorkReport = EndWorkReport[EndWorkReport['单据日期'] >= datetime64(self.ThisMonthStart)]
         EndWorkReport = EndWorkReport[EndWorkReport['单据日期'] <= datetime64(self.ThisMonthEnd)]
+        EndWorkReport['状态合并'] = EndWorkReport['完整状态'] + EndWorkReport['报工状态']
+
+        try:
+            EndWorkCount = EndWorkReport["状态合并"].value_counts()['完整及时']
+        except:
+            EndWorkCount = 0
+
+        EndWorkCountAll = EndWorkReport.shape[0]
+        EndWorkResult = format(float(EndWorkCount / EndWorkCountAll), '.2%')
+        dict = {'合格报工总数': [EndWorkCount], '当月总报工数': [EndWorkCountAll], '报工及时率和完整率': [EndWorkResult]}
+        EndWorkResult_sheet = pd.DataFrame(dict)
         order = ['单据日期', '单据号码', '生产订单', '行号', '物料编码', '物料名称', '移入标准工序', '移入生产部门', '生产数量', '总合格数量', '完整状态', '实际完工日期',
                  '报工单审核时间', '报工状态']
         EndWorkReport = EndWorkReport[order]
-        self.SaveFile(EndWorkReport)
+        self.SaveFile(EndWorkReport, EndWorkResult_sheet)
 
-    def SaveFile(self, EndWorkReport):
+    def SaveFile(self, EndWorkReport, EndWorkResult_sheet):
         # self.Workshop1 = EndWorkReport.loc[EndWorkReport['移入工作中心'].str.contains('生产运营部-机加工生产')]
         # self.Workshop2 = EndWorkReport.loc[EndWorkReport['移入工作中心'].str.contains('生产运营部-电控柜车间生产')]
         # self.Workshop3 = EndWorkReport.loc[EndWorkReport['移入工作中心'].str.contains('生产运营部-铆焊生产')]
@@ -92,7 +105,12 @@ class WorkReport:
         # self.Workshop6 = EndWorkReport.loc[EndWorkReport['移入工作中心'].str.contains('生产运营部-装配生产')]
 
         self.mkdir(self.path + '/RESULT/PROD')
-        EndWorkReport.to_excel(f"{self.path}/RESULT/PROD/报工及时率和完整率.xlsx", sheet_name="报工及时率和完整率", index=False)
+        EndWorkResult_sheet.to_excel(f"{self.path}/RESULT/PROD/报工及时率和完整率.xlsx", sheet_name="报工及时率和完整率", index=False)
+        book = load_workbook(f'{self.path}/RESULT/PROD/报工及时率和完整率.xlsx')
+        writer = pd.ExcelWriter(f"{self.path}/RESULT/PROD/报工及时率和完整率.xlsx", engine='openpyxl')
+        writer.book = book
+        EndWorkReport.to_excel(writer, "当月报工清单", index=False)
+        writer.save()
 
     def run(self):
         self.GetWorkReport()

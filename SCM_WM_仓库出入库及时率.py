@@ -54,6 +54,8 @@ class Warehouse:
         self.func.mkdir(path)
 
     def GetWarehouse(self):
+
+        # 采购入库及时率
         self.MaterialInData = self.MaterialInData.dropna(axis=0, how='any')  # 去除所有nan的列
         self.PurchaseInData = self.PurchaseInData.dropna(axis=0, how='any')  # 去除所有nan的列
         # 采购入库单列表 和 采购时效性统计表 合并
@@ -64,8 +66,18 @@ class Warehouse:
         self.PurchaseInData.loc[self.PurchaseInData["审批时间/H"] > 72, "单据状态"] = "超时"  # 计算出来的审批延时大于72为超时
         self.PurchaseInData.loc[self.PurchaseInData["审批时间/H"] <= 72, "单据状态"] = "正常"  # 小于等于72为正常
 
-        # 材料出库及时率
+        try:
+            PurchaseInCount = self.PurchaseInData['单据状态'].value_counts()['超时']
+        except:
+            PurchaseInCount = 0
 
+        PurchaseInCountAll = len(self.PurchaseInData)
+        PurchaseInResult = format(float(1 - PurchaseInCount / PurchaseInCountAll), '.2%')
+        dict1 = {'当月未及时入库物料数': [PurchaseInCount], '当月入库物料总数': [PurchaseInCountAll],
+                 '仓库入库及时率': [PurchaseInResult]}
+        PurchaseInResult_sheet = pd.DataFrame(dict1)
+
+        # 材料出库及时率
         # 将 WorkFlowData 的数据分组保存，
         # 取分组后最后降序排列
         # 取第一个也就是最大时间
@@ -88,33 +100,55 @@ class Warehouse:
         self.MaterialOutData.loc[self.MaterialOutData["审批时间/H"] > 72, "单据状态"] = "超时"  # 计算出来的审批延时大于72为超时
         self.MaterialOutData.loc[self.MaterialOutData["审批时间/H"] <= 72, "单据状态"] = "正常"  # 小于等于72为正常
         self.MaterialOutData = self.MaterialOutData.drop_duplicates()  # 去重
+        try:
+            MaterialOutCount = self.MaterialOutData['单据状态'].value_counts()['超时']
+        except:
+            MaterialOutCount = 0
 
-    def PurchaseIn(self):  # 仓库入库及时率
+        MaterialOutCountAll = len(self.MaterialOutData)
+        MaterialOutResult = format(float(1 - MaterialOutCount / MaterialOutCountAll), '.2%')
+        dict2 = {'当月未及时出库物料数': [MaterialOutCount], '当月出库物料总数': [MaterialOutCountAll],
+                 '仓库出库及时率': [MaterialOutResult]}
+        MaterialOutResult_sheet = pd.DataFrame(dict2)
+        self.PrintOut(PurchaseInResult_sheet, MaterialOutResult_sheet)
+
+    def PrintOut(self, PurchaseInResult_sheet, MaterialOutResult_sheet):  # 仓库出入库及时率输出
         del self.PurchaseInData['订单号']
         del self.PurchaseInData['订单审核时间']
         del self.PurchaseInData['报检审核时间']
+        del self.MaterialOutData['处理动作']
 
         self.PurchaseInData = self.PurchaseInData.rename(columns={'行号': '入库单行号', '仓库': '入库仓库'})
         order = ['入库单号', '入库单行号', '入库仓库', '存货编码', '存货名称', '检验审核时间', '入库制单时间', '审批时间/H', '单据状态']
         self.PurchaseInData = self.PurchaseInData[order]
-        self.mkdir(self.path + "/RESULT/SCM/WM")
-        self.PurchaseInData.to_excel(f'{self.path}/RESULT/SCM/WM/仓库出入库及时率.xlsx', sheet_name="仓库入库及时率", index=False)
 
-    def MaterialOut(self):  # 仓库出库及时率
-        del self.MaterialOutData['处理动作']
         self.MaterialOutData = self.MaterialOutData.rename(columns={'行号': '材料出库单行号', '仓库': '出库仓库'})
         order = ['出库单号', '材料出库单行号', '出库仓库', '材料编码', '物料描述', '处理人', '上一流程处理时间', '处理时间', '审批时间/H', '单据状态']
         self.MaterialOutData = self.MaterialOutData[order]
+
+        self.mkdir(self.path + "/RESULT/SCM/WM")
+        PurchaseInResult_sheet.to_excel(f'{self.path}/RESULT/SCM/WM/仓库出入库及时率.xlsx', sheet_name="仓库入库及时率", index=False)
         book = load_workbook(f'{self.path}/RESULT/SCM/WM/仓库出入库及时率.xlsx')
         writer = pd.ExcelWriter(f"{self.path}/RESULT/SCM/WM/仓库出入库及时率.xlsx", engine='openpyxl')
         writer.book = book
-        self.MaterialOutData.to_excel(writer, "仓库出库及时率", index=False)
+        self.PurchaseInData.to_excel(writer, "当月仓库入库情况", index=False)
+        MaterialOutResult_sheet.to_excel(writer, "仓库出库及时率", index=False)
+        self.MaterialOutData.to_excel(writer, "当月仓库出库情况", index=False)
         writer.save()
+
+    # def MaterialOut(self, MaterialOutResult_sheet):  # 仓库出库及时率
+    #
+    #     book = load_workbook(f'{self.path}/RESULT/SCM/WM/仓库出入库及时率.xlsx')
+    #     writer = pd.ExcelWriter(f"{self.path}/RESULT/SCM/WM/仓库出入库及时率.xlsx", engine='openpyxl')
+    #     writer.book = book
+    #     MaterialOutResult_sheet.to_excel(writer, "仓库出库及时率", index=False)
+    #     self.MaterialOutData.to_excel(writer, "当月仓库出库情况", index=False)
+    #     writer.save()
 
     def run(self):
         self.GetWarehouse()
-        self.PurchaseIn()
-        self.MaterialOut()
+        # self.PurchaseIn()
+        # self.MaterialOut()
 
 
 if __name__ == '__main__':

@@ -18,7 +18,7 @@ class OrderConversion:
         self.MRPScreenList = []  # 筛选合并的mrp数据
         self.MRPNewDataList = []  # 本月所有的mrp数据
         self.GroupMRPList = []  # 分组后的mrp数据
-
+        self.count = 0
         self.ThisMonthStart = str(self.ThisMonthStart).split(" ")[0]
         self.LastMonthStart = str(self.LastMonthStart).split(" ")[0]
         self.ThisMonthEnd = str(self.ThisMonthEnd).split(" ")[0]
@@ -102,6 +102,8 @@ class OrderConversion:
                     self.MRPNewDataList.append(new_data)
                 except:
                     continue
+                self.count = new_data.shape[0] + self.count  # 统计单月所有MRP计划数量
+
                 catch_data = datetime64(f"{year}-{this_month}-{work_day}")
                 new_data['抓取时间'] = catch_data
                 new_data = new_data.loc[new_data["物料属性"] == "采购"]
@@ -139,14 +141,27 @@ class OrderConversion:
 
         #  当月大于2天的未转换MRP数据筛选
         MRPNow_data = self.GroupMRPData[self.GroupMRPData['抓取时间'] >= datetime64(self.this_month_check)]
-        self.mkdir(self.path + '/RESULT/SCM/OP')
-        PRNotConvertData.to_excel(f'{self.path}/RESULT/SCM/OP/采购订单转换及时率.xlsx', sheet_name="当月未转换PR清单", index=False)
 
+        try:
+            PRDelayCount1 = PRDelayPOData['创建及时率'].value_counts()['超时']
+        except:
+            PRDelayCount1 = 0
+
+        PRDelayCount = PRDelayCount1 + PRNotConvertData.shape[0] + MRPNow_data.shape[0]
+        PRDelayCountAll = self.count + PRDelayPOData.shape[0] + PRNotConvertData.shape[0]
+        PRDelayResult = format(float(1 - PRDelayCount / PRDelayCountAll), '.2%')
+        dict = {'当月未及时转换物料数': [PRDelayCount], '当月转换物料总数': [PRDelayCountAll],
+                '采购订单转换及时率': [PRDelayResult]}
+        PRDelayResult_sheet = pd.DataFrame(dict)
+
+        self.mkdir(self.path + '/RESULT/SCM/OP')
+        PRDelayResult_sheet.to_excel(f'{self.path}/RESULT/SCM/OP/采购订单转换及时率.xlsx', sheet_name="采购订单转换及时率", index=False)
         book = load_workbook(f'{self.path}/RESULT/SCM/OP/采购订单转换及时率.xlsx')
         writer = pd.ExcelWriter(f"{self.path}/RESULT/SCM/OP/采购订单转换及时率.xlsx", engine='openpyxl')
         writer.book = book
-        PRDelayPOData.to_excel(writer, "历史转换PR清单", index=False)
-        MRPNow_data.to_excel(writer, "当月未转换MRP清单", index=False)
+        PRNotConvertData.to_excel(writer, "当月未转换PR清单", index=False)
+        MRPNow_data.to_excel(writer, "当月未及时转换MRP清单", index=False)
+        PRDelayPOData.to_excel(writer, "历史转换PR情况", index=False)
         writer.save()
 
     def HistoryNotConverted(self):  # 历史未转换MRP清单

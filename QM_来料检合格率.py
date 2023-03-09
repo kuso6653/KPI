@@ -89,17 +89,28 @@ class QualityControl:
         self.PlasticPOData = self.QMData_temp1[~self.QMData_temp1['行备注'].str.contains('橡|挤')]  # 筛出注塑机项目的行
         # self.PlasticPOData = self.QMData_temp1[~self.QMData_temp1['行备注'].str.contains('挤')]  # 筛出挤出机项目的行
         # self.PlasticPOData = pd.concat([PlasticPOData_temp1, PlasticPOData_temp2], ignore_index=True)  # 筛出挤出机项目的行
+        try:
+            QMCount = self.DefectivePrd.shape[0]
+        except:
+            QMCount = 0
 
-    def SaveFile(self):
+        QMCountAll = self.GRData.shape[0]
+        QMResult = format(float(1 - QMCount / QMCountAll), '.2%')
+        dict = {'当月来料不合格数': [QMCount], '当月已入库物料总数': [QMCountAll], '来料检验合格率': [QMResult]}
+        QMResult_sheet = pd.DataFrame(dict)
+        self.SaveFile(QMResult_sheet)
+        
+        
+
+    def SaveFile(self, QMResult_sheet):
         self.mkdir(self.path + '/RESULT/QM')
-        self.DefectivePrd.to_excel(f'{self.path}/RESULT/QM/来料检验合格率.xlsx', sheet_name="本月不合格的物料清单", index=False)
-
+        QMResult_sheet.to_excel(f'{self.path}/RESULT/QM/来料检验合格率.xlsx', sheet_name="来料检验合格率", index=False)
         book = load_workbook(f'{self.path}/RESULT/QM/来料检验合格率.xlsx')
         writer = pd.ExcelWriter(f"{self.path}/RESULT/QM/来料检验合格率.xlsx", engine='openpyxl')
         writer.book = book
+        self.DefectivePrd.to_excel(writer, "本月不合格的物料清单", index=False)
         self.GRData.to_excel(writer, "本月已入库的物料清单", index=False)
         self.NotQMData.to_excel(writer, "本月未质检的物料清单", index=False)
-        # self.NotGRData.to_excel(writer, "本月已质检未入库的物料清单", index=False)
         self.CPPOData.to_excel(writer, "硫化机项目物料", index=False)
         self.ExPOData.to_excel(writer, "挤出机项目物料", index=False)
         self.PlasticPOData.to_excel(writer, "塑机项目物料", index=False)
@@ -107,8 +118,7 @@ class QualityControl:
 
     def run(self):
         self.ThisMonthQM()
-        self.SaveFile()
-
+        # self.SaveFile()
 
 if __name__ == '__main__':
     QC = QualityControl()

@@ -1,6 +1,7 @@
 import pandas as pd
 from numpy import datetime64
 import Func
+from openpyxl import load_workbook
 
 
 class FinishedProduct:
@@ -41,14 +42,30 @@ class FinishedProduct:
             int)
         ProductionData.loc[ProductionData["审批延时"] > 24, "单据状态"] = "超时"
         ProductionData.loc[ProductionData["审批延时"] <= 24, "单据状态"] = "正常"
+
+        try:
+            ProductionCount = ProductionData["单据状态"].value_counts()['超时']
+        except:
+            ProductionCount = 0
+
+        ProductionCountAll = ProductionData.shape[0]
+        ProductionResult = format(float(1 - ProductionCount / ProductionCountAll), '.2%')
+        dict = {'当月产成品未及时检验数': [ProductionCount], '当月产成品检验总数': [ProductionCountAll], '产成品检验及时率': [ProductionResult]}
+        ProductionResult_sheet = pd.DataFrame(dict)
+
         order = ['检验单号', '生产批号', '部门名称', '生产订单号码', '行号', '物料编码', '物料名称', '报检数量',
                  '报检审核时间', '检验审核时间', '审批延时', '单据状态']
         ProductionData = ProductionData[order]
-        self.SaveFile(ProductionData)
+        self.SaveFile(ProductionData, ProductionResult_sheet)
 
-    def SaveFile(self, ProductionData):
+    def SaveFile(self, ProductionData, ProductionResult_sheet):
         self.mkdir(self.path + '/RESULT/QM')
-        ProductionData.to_excel(f'{self.path}/RESULT/QM/产成品检验及时率.xlsx', sheet_name="产成品检验及时率", index=False)
+        ProductionResult_sheet.to_excel(f'{self.path}/RESULT/QM/产成品检验及时率.xlsx', sheet_name="产成品检验及时率", index=False)
+        book = load_workbook(f'{self.path}/RESULT/QM/产成品检验及时率.xlsx')
+        writer = pd.ExcelWriter(f"{self.path}/RESULT/QM/产成品检验及时率.xlsx", engine='openpyxl')
+        writer.book = book
+        ProductionData.to_excel(writer, "当月产成品检验情况清单", index=False)
+        writer.save()
 
     def run(self):
         self.GetFinishedProduct()

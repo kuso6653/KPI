@@ -1,6 +1,7 @@
 import pandas as pd
 import Func
 from numpy import datetime64
+from openpyxl import load_workbook
 
 pd.set_option('display.max_columns', None)
 
@@ -9,6 +10,7 @@ pd.set_option('display.max_columns', None)
 class ProcessDispatch:
     def __init__(self):
         self.AllDataList = []
+        self.DispatchDataList = []
         self.BaseDataList = []
         self.func = Func
         self.ThisMonthStart, self.ThisMonthEnd, self.LastMonthEnd, self.LastMonthStart = self.func.GetDate()
@@ -28,16 +30,31 @@ class ProcessDispatch:
         new_data = new_data.dropna(subset=['物料编码'])  # 去除nan的列
         out_data = pd.merge(base_data.drop(labels=['派工标识', '工作中心', '生产部门', '工序开工日', '工序完工日'], axis=1),
                             new_data, on=['物料编码', '生产订单', '工序行号', '行号', '物料名称'])
-        out_data = out_data.loc[out_data['派工标识'] != "*"]
         out_data = out_data[out_data['工序开工日'] >= datetime64(self.ThisMonthStart)]
         out_data = out_data[out_data['工序开工日'] <= datetime64(self.ThisMonthEnd)]
+        Dispatch_data = out_data
+        out_data = out_data.loc[out_data['派工标识'] != "*"]
         self.AllDataList.append(out_data)
+        self.DispatchDataList.append(Dispatch_data)
 
     def SaveFile(self):
         res = pd.concat(self.AllDataList, axis=0, ignore_index=True)
         res = res.drop_duplicates()
+        Dispatch = pd.concat(self.DispatchDataList, axis=0, ignore_index=True)
+        Dispatch = Dispatch.drop_duplicates()
+
+        DispatchResult = (1 - res.shape[0] / Dispatch.shape[0])
+        DispatchResult = format(float(DispatchResult), '.2%')
+        dict = {'当月未派工总数': [res.shape[0]], '当月需派工单总数': [Dispatch.shape[0]], '当月派工及时率': [DispatchResult]}
+        DispatchResult_Sheet = pd.DataFrame(dict)
+
         self.func.mkdir(self.path + '/RESULT/PROD')
-        res.to_excel(f'{self.path}/RESULT/PROD/工序派工及时率.xlsx', sheet_name="未派工工序清单", index=False)
+        DispatchResult_Sheet.to_excel(f'{self.path}/RESULT/PROD/工序派工及时率.xlsx', sheet_name="当月派工及时率", index=False)
+        book = load_workbook(f'{self.path}/RESULT/PROD/工序派工及时率.xlsx')
+        writer = pd.ExcelWriter(f"{self.path}/RESULT/PROD/工序派工及时率.xlsx", engine='openpyxl')
+        writer.book = book
+        res.to_excel(writer, "当月未派工工序清单", index=False)
+        writer.save()
 
     def GetProcessDispatch(self):
         # 获取截取这个月份、年、上个月

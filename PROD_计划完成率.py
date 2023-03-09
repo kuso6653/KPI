@@ -1,7 +1,7 @@
 import pandas as pd
 import Func
 from numpy import datetime64
-
+from openpyxl import load_workbook
 
 class Plan:
     def __init__(self):
@@ -41,13 +41,27 @@ class Plan:
         PlanData = PlanData[PlanData['产成品入库单制单时间'] >= datetime64(self.ThisMonthStart)]
         PlanData = PlanData[PlanData['产成品入库单制单时间'] <= datetime64(self.ThisMonthEnd)]
 
+        try:
+            PlanCount = PlanData["单据状态"].value_counts()['超时']
+        except:
+            PlanCount = 0
+
+        PlanCountAll = PlanData.shape[0]
+        PlanResult = format(float(1-(PlanCount / PlanCountAll)), '.2%')
+        dict = {'未按照计划完成数': [PlanCount], '当月计划完成总数': [PlanCountAll], '计划完成率': [PlanResult]}
+        PlanResult_sheet = pd.DataFrame(dict)
         order = ['生产订单号', '行号', '物料编码', '物料名称', '部门名称', '产成品入库单制单时间', '生产订单完工日期', '审批延时/H', '单据状态']
         PlanData = PlanData[order]
-        self.SaveFile(PlanData)
+        self.SaveFile(PlanData, PlanResult_sheet)
 
-    def SaveFile(self, PlanData):
+    def SaveFile(self, PlanData, PlanResult_sheet):
         self.mkdir(self.path + '/RESULT/PROD')
-        PlanData.to_excel(f'{self.path}/RESULT/PROD/计划完成率.xlsx', sheet_name="计划完成率", index=False)
+        PlanResult_sheet.to_excel(f'{self.path}/RESULT/PROD/计划完成率.xlsx', sheet_name="计划完成率", index=False)
+        book = load_workbook(f'{self.path}/RESULT/PROD/计划完成率.xlsx')
+        writer = pd.ExcelWriter(f"{self.path}/RESULT/PROD/计划完成率.xlsx", engine='openpyxl')
+        writer.book = book
+        PlanData.to_excel(writer, "当月计划完成情况清单", index=False)
+        writer.save()
 
     def run(self):
         self.GetPlan()

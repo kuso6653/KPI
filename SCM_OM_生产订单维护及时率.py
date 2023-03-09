@@ -48,11 +48,28 @@ class OrderMaintenance:
 
         OrderMaintenanceData.loc[OrderMaintenanceData["审批延时/H"] > 24, "单据状态"] = "超时"  # 计算出来的审批延时大于1天为超时
         OrderMaintenanceData.loc[OrderMaintenanceData["审批延时/H"] <= 24, "单据状态"] = "正常"  # 小于等于1天为正常
-        self.SaveFile(OrderMaintenanceData)
 
-    def SaveFile(self, OrderMaintenanceData):
+        try:
+            OrderMaintenanceCount = OrderMaintenanceData['单据状态'].value_counts()['超时']
+        except:
+            OrderMaintenanceCount = 0
+
+        OrderMaintenanceCountAll = OrderMaintenanceData.shape[0]
+        OrderMaintenanceResult = format(float(1 - OrderMaintenanceCount / OrderMaintenanceCountAll), '.2%')
+        dict = {'当月未及时处理工程更改物料数': [OrderMaintenanceCount], '当月工程更改物料总数': [OrderMaintenanceCountAll],
+                '生产订单维护及时率': [OrderMaintenanceResult]}
+        OrderMaintenanceResult_sheet = pd.DataFrame(dict)
+
+        self.SaveFile(OrderMaintenanceData, OrderMaintenanceResult_sheet)
+
+    def SaveFile(self, OrderMaintenanceData, OrderMaintenanceResult_sheet):
         self.mkdir(self.path+"/RESULT/SCM/OM")
-        OrderMaintenanceData.to_excel(f'{self.path}/RESULT/SCM/OM/生产订单维护及时率.xlsx', sheet_name="生产订单维护及时率", index=False)
+        OrderMaintenanceResult_sheet.to_excel(f'{self.path}/RESULT/SCM/OM/生产订单维护及时率.xlsx', sheet_name="生产订单维护及时率", index=False)
+        book = load_workbook(f'{self.path}/RESULT/SCM/OM/生产订单维护及时率.xlsx')
+        writer = pd.ExcelWriter(f"{self.path}/RESULT/SCM/OM/生产订单维护及时率.xlsx", engine='openpyxl')
+        writer.book = book
+        OrderMaintenanceData.to_excel(writer, "当月工程更改物料处理情况", index=False)
+        writer.save()
 
     def run(self):
         self.GetOrderMaintenance()

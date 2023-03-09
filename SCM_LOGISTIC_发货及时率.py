@@ -3,7 +3,7 @@ import pandas as pd
 import calendar
 import datetime
 from datetime import timedelta
-import openpyxl
+from openpyxl import load_workbook
 from numpy import datetime64
 
 import Func
@@ -42,11 +42,26 @@ class Deliver:
             int)
         DeliverData.loc[DeliverData["审批延时"] > 24, "单据状态"] = "超时"
         DeliverData.loc[DeliverData["审批延时"] <= 24, "单据状态"] = "正常"
-        self.SaveFile(DeliverData)
+        
+        try:
+            DeliverCount = DeliverData['单据状态'].value_counts()['超时']
+        except:
+            DeliverCount = 0
 
-    def SaveFile(self, DeliverData):
+        DeliverCountAll = DeliverData.shape[0]
+        DeliverResult = format(float(1 - DeliverCount / DeliverCountAll), '.2%')
+        dict = {'当月发货不及时物料数': [DeliverCount], '当月已发货物料总数': [DeliverCountAll], '发货及时率': [DeliverResult]}
+        DeliverResult_sheet = pd.DataFrame(dict)
+        self.SaveFile(DeliverData, DeliverResult_sheet)
+
+    def SaveFile(self, DeliverData, DeliverResult_sheet):
         self.mkdir(self.path+"/RESULT/SCM/LOGISTIC")
-        DeliverData.to_excel(f'{self.path}/RESULT/SCM/LOGISTIC/发货及时率.xlsx', sheet_name="发货及时率", index=False)
+        DeliverResult_sheet.to_excel(f'{self.path}/RESULT/SCM/LOGISTIC/发货及时率.xlsx', sheet_name="发货及时率", index=False)
+        book = load_workbook(f'{self.path}/RESULT/SCM/LOGISTIC/发货及时率.xlsx')
+        writer = pd.ExcelWriter(f"{self.path}/RESULT/SCM/LOGISTIC/发货及时率.xlsx", engine='openpyxl')
+        writer.book = book
+        DeliverData.to_excel(writer, "当月发货情况清单", index=False)
+        writer.save()
 
     def run(self):
         self.GetDeliver()

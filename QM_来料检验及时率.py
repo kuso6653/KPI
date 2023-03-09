@@ -34,15 +34,32 @@ class MaterialInspection:
             int)
         PurchaseInData.loc[PurchaseInData["审批延时"] > 48, "单据状态"] = "超时"  # 计算出来的质检的审批延时大于48为超时
         PurchaseInData.loc[PurchaseInData["审批延时"] <= 48, "单据状态"] = "正常"  # 小于等于48为正常
-        self.SaveFile(PurchaseInData, ApproveData)
 
-    def SaveFile(self, PurchaseInData, ApproveData):
+        try:
+            PurchaseInCount1 = PurchaseInData['单据状态'].value_counts()['超时']
+        except:
+            PurchaseInCount1 = 0
+
+        try:
+            PurchaseInCount2 = ApproveData['单据状态'].value_counts()['超时']
+        except:
+            PurchaseInCount2 = 0
+
+        PurchaseInCount = PurchaseInCount1 + PurchaseInCount2
+        PurchaseInCountAll = PurchaseInData.shape[0] + ApproveData.shape[0]
+        PurchaseInResult = format(float(1 - PurchaseInCount / PurchaseInCountAll), '.2%')
+        dict = {'当月来料不及时物料数': [PurchaseInCount], '当月已报检物料总数': [PurchaseInCountAll], '来料检验及时率': [PurchaseInResult]}
+        PurchaseInResult_sheet = pd.DataFrame(dict)
+        self.SaveFile(PurchaseInData, ApproveData, PurchaseInResult_sheet)
+
+    def SaveFile(self, PurchaseInData, ApproveData, PurchaseInResult_sheet):
         self.mkdir(self.path + "/RESULT/QM")
-        PurchaseInData.to_excel(f'{self.path}/RESULT/QM/来料检验及时率.xlsx', sheet_name="来料检验及时率", index=False)
+        PurchaseInResult_sheet.to_excel(f'{self.path}/RESULT/QM/来料检验及时率.xlsx', sheet_name="来料检验及时率", index=False)
 
         book = load_workbook(f'{self.path}/RESULT/QM/来料检验及时率.xlsx')
         writer = pd.ExcelWriter(f"{self.path}/RESULT/QM/来料检验及时率.xlsx", engine='openpyxl')
         writer.book = book
+        PurchaseInData.to_excel(writer, "当月来料检验情况清单", index=False)
         ApproveData.to_excel(writer, "已报检未检验数据", index=False)
         writer.save()
 
